@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pallet Calculator — HEWN</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #1a1a18;
+    --surface: #242420;
+    --border: #3a3a34;
+    --accent: #c8a94a;
+    --accent2: #7db87d;
+    --danger: #c85a3a;
+    --warn: #c8844a;
+    --text: #e8e4d8;
+    --muted: #888880;
+    --panel: #2e2e28;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+  }
+
+  header span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+  }
+
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 24px;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+  }
+
+  .left { display: flex; flex-direction: column; gap: 20px; }
+  .right { display: flex; flex-direction: column; gap: 20px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+
+  .panel-header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-body { padding: 16px; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 2px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(200,169,74,0.05); }
+  .upload-zone input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  .upload-icon { font-size: 2rem; margin-bottom: 10px; }
+  .upload-zone p { color: var(--muted); font-size: 0.85rem; }
+  .upload-zone strong { color: var(--accent); }
+
+  /* Line items table */
+  table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 9px 10px; border-bottom: 1px solid rgba(58,58,52,0.5); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(200,169,74,0.04); }
+
+  .species-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .tag-cedar { background: rgba(125,184,125,0.15); color: var(--accent2); border: 1px solid rgba(125,184,125,0.3); }
+  .tag-oak { background: rgba(200,132,74,0.15); color: var(--warn); border: 1px solid rgba(200,132,74,0.3); }
+  .tag-accoya { background: rgba(200,169,74,0.15); color: var(--accent); border: 1px solid rgba(200,169,74,0.3); }
+  .tag-hemlock { background: rgba(150,180,200,0.15); color: #90b4c8; border: 1px solid rgba(150,180,200,0.3); }
+  .tag-other { background: rgba(136,136,128,0.15); color: var(--muted); border: 1px solid rgba(136,136,128,0.3); }
+  .tag-unknown { background: rgba(200,90,58,0.15); color: var(--danger); border: 1px solid rgba(200,90,58,0.3); }
+
+  .flag-warn { color: var(--danger); font-size: 0.7rem; }
+
+  /* Results */
+  .pallet-cards { display: flex; flex-direction: column; gap: 10px; }
+
+  .pallet-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 2px;
+    padding: 14px 16px;
+  }
+
+  .pallet-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .pallet-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pallet-dims {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .pallet-weight {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    border-radius: 2px;
+  }
+
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* Weight table editor */
+  .weight-editor { max-height: 340px; overflow-y: auto; }
+  .weight-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 80px;
+    gap: 6px;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(58,58,52,0.4);
+  }
+  .weight-row:last-child { border-bottom: none; }
+  .weight-row span { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+  .weight-row strong { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--text); }
+
+  input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    padding: 5px 8px;
+    width: 100%;
+    border-radius: 2px;
+    text-align: right;
+  }
+  input[type="number"]:focus { outline: none; border-color: var(--accent); }
+
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #1a1a18; font-weight: 600; }
+  .btn-primary:hover { background: #d4b855; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+
+  .status-bar {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    padding: 8px 16px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    letter-spacing: 1px;
+  }
+
+  .status-bar.ok { color: var(--accent2); }
+  .status-bar.err { color: var(--danger); }
+
+  .group-header {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 8px 0 4px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .actions { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+
+  .email-panel { margin-top: 0; }
+
+  .recipient-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .recipient-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .recipient-row:hover { border-color: var(--accent); }
+  .recipient-row.selected { border-color: var(--accent); background: rgba(200,169,74,0.07); }
+  .recipient-row input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+  .recipient-name { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--text); flex: 1; }
+  .recipient-email { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+
+  .work-step {
+    border-left: 2px solid var(--border);
+    padding: 6px 0 6px 12px;
+    margin: 6px 0;
+  }
+  .work-step-title {
+    font-size: 0.62rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .work-line { color: var(--muted); font-size: 0.7rem; line-height: 1.8; }
+  .work-result { color: var(--text); font-weight: 600; }
+  .work-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+  .pallet-species-list {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Pallet Calculator</h1>
+  <span>Lumber Shipping Tool</span>
+  <button class="btn btn-ghost" onclick="clearAll()" style="margin-left:auto;border-color:var(--danger);color:var(--danger);">
+    ✕ Clear Estimate
+  </button>
+</header>
+
+<div class="main">
+  <div class="left">
+
+    <!-- Upload -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>01 — Upload Order PDF</span>
+        <span id="fileName" style="color:var(--muted);font-size:0.65rem;"></span>
+      </div>
+      <div class="panel-body">
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".pdf" />
+          <div class="upload-icon">📄</div>
+          <p><strong>Drop PDF here</strong> or click to browse</p>
+          <p style="margin-top:6px;font-size:0.75rem;">Google Sheet exports accepted</p>
+        </div>
+      </div>
+      <div class="status-bar" id="statusBar">Waiting for file...</div>
+      <div id="debugPanel" style="display:none;background:#111;border:1px solid #c85a3a;padding:10px 14px;font-family:IBM Plex Mono,monospace;font-size:0.72rem;color:#e8e4d8;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;"></div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>02 — Extracted Line Items</span>
+        <button class="btn btn-ghost" id="clearBtn" style="padding:4px 10px;font-size:0.65rem;" onclick="clearAll()">Clear</button>
+      </div>
+      <div id="lineItemsContainer">
+        <div class="empty-state">No items yet — upload a PDF to begin</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right">
+
+    <!-- Results -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>03 — Pallet Results</span>
+        <button class="btn btn-ghost" onclick="toggleWorkShown()" id="showWorkBtn" style="padding:4px 10px;font-size:0.65rem;opacity:0.4;pointer-events:none;">▾ Show Work</button>
+      </div>
+      <div class="panel-body">
+        <div class="summary-grid">
+          <div class="stat-box">
+            <div class="stat-val" id="totalPallets">—</div>
+            <div class="stat-label">Total Pallets</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="totalWeight">—</div>
+            <div class="stat-label">Total lbs (incl. pallets)</div>
+          </div>
+        </div>
+        <div class="pallet-cards" id="palletCards">
+          <div class="empty-state">Results appear after upload</div>
+        </div>
+
+        <!-- Work breakdown -->
+        <div id="workBreakdown" style="display:none;border-top:1px solid var(--border);padding:16px;">
+          <div id="workContent" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;line-height:2;color:var(--text);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="panel email-panel">
+      <div class="panel-header">
+        <span>04 — Email Quote</span>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.65rem;" onclick="toggleRecipientEditor()">+ Manage</button>
+      </div>
+      <div class="panel-body" id="emailPanelBody">
+        <div class="recipient-list" id="recipientList"></div>
+        <div id="noRecipientsMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);padding:8px 0;">
+          No recipients yet — click Manage to add
+        </div>
+        <button class="btn btn-primary" id="sendEmailBtn" onclick="showEmailModal()"
+          style="width:100%;margin-top:4px;opacity:0.4;pointer-events:none;">
+          Open in Gmail
+        </button>
+      </div>
+    </div>
+
+    <!-- Recipient Editor (hidden by default) -->
+    <div class="panel" id="recipientEditorPanel" style="display:none;">
+      <div class="panel-header"><span>Manage Recipients</span></div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 36px;gap:6px;margin-bottom:12px;">
+          <input type="text" id="newRecipientName" placeholder="Name" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.75rem;padding:6px 8px;border-radius:2px;" />
+          <input type="email" id="newRecipientEmail" placeholder="email@example.com" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.75rem;padding:6px 8px;border-radius:2px;" />
+          <button class="btn btn-primary" style="padding:6px 10px;" onclick="addRecipient()">+</button>
+        </div>
+        <div id="recipientEditorList"></div>
+        <div class="actions" style="padding:12px 0 0 0;">
+          <button class="btn btn-ghost" onclick="toggleRecipientEditor()">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weight Editor -->
+
+    <div class="panel">
+      <div class="panel-header">
+        <span>Weight Table (lbs/LF)</span>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.65rem;" onclick="toggleEditor()">Edit</button>
+      </div>
+      <div id="weightEditorBody" class="panel-body" style="display:none;">
+        <div class="weight-editor" id="weightEditor"></div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="saveWeights()">Save Weights</button>
+        </div>
+      </div>
+      <div class="panel-body" id="weightSummary">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);line-height:1.8;">
+          Cedar/Spruce/Ayous · Oak/Cypress · Accoya/Fir<br>
+          Hemlock · Kebony · Abodo · Alder · Walnut · Teak<br>
+          <span style="color:var(--accent);font-size:0.65rem;">Click Edit to modify any value</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ─── Weight Table ───────────────────────────────────────────────
+const DEFAULT_WEIGHTS = {
+  "Cedar/Spruce/Ayous": {
+    "1x4": 0.5, "1x6": 0.8, "1x8": 1.0, "1x10": 1.3, "1x12": 1.6,
+    "5/4x6": 1.2,
+    "2x4": 1.0, "2x6": 1.6, "2x8": 2.0, "2x10": 2.6, "2x12": 3.2, "2x14": 3.5
+  },
+  "Oak/Cypress": {
+    "1x5": 1.5, "1x6": 1.75, "1x7": 2.0, "1x8": 2.25, "1x9": 2.5
+  },
+  "Accoya/Fir": {
+    "1x4": 0.75, "1x6": 1.2, "5/4x6": 1.4, "6/4x6": 1.5, "1x8": 1.5, "1x12": 2.4
+  },
+  "Mountain Hemlock": {
+    "1x6": 1.0, "5/4x6": 1.2, "1x8": 1.25, "1x10": 1.4
+  },
+  "Kebony": { "1x6": 1.5 },
+  "Abodo": { "1x6": 0.9 },
+  "Alder": { "1x8": 1.0 },
+  "Walnut": { "1x6": 3.3 },
+  "Teak": { "1x6": 2.5 }
+};
+
+let weights = JSON.parse(localStorage.getItem('palletWeights') || 'null') || JSON.parse(JSON.stringify(DEFAULT_WEIGHTS));
+let lineItems = [];
+
+// ─── Species Aliases ────────────────────────────────────────────
+// Ordered longest-first so multi-word phrases match before single words
+const SPECIES_MAP = [
+  ["wrc stk",          "Cedar/Spruce/Ayous"],
+  ["wrc a&btr",        "Cedar/Spruce/Ayous"],
+  ["wrc a & btr",      "Cedar/Spruce/Ayous"],
+  ["western red cedar","Cedar/Spruce/Ayous"],
+  ["douglas fir",      "Accoya/Fir"],
+  ["mountain hemlock", "Mountain Hemlock"],
+  ["#2eslp",           "Cedar/Spruce/Ayous"],
+  ["2eslp",            "Cedar/Spruce/Ayous"],
+  ["eslp",             "Cedar/Spruce/Ayous"],
+  ["a&btr",            "Cedar/Spruce/Ayous"],
+  ["a&better",          "Cedar/Spruce/Ayous"],
+  ["a better",          "Cedar/Spruce/Ayous"],
+  ["a & btr",          "Cedar/Spruce/Ayous"],
+  ["cedar",            "Cedar/Spruce/Ayous"],
+  ["wrc",              "Cedar/Spruce/Ayous"],
+  ["spruce",           "Cedar/Spruce/Ayous"],
+  ["ayous",            "Cedar/Spruce/Ayous"],
+  ["stk",              "Cedar/Spruce/Ayous"],
+  ["cypress",          "Oak/Cypress"],
+  ["oak",              "Oak/Cypress"],
+  ["accoya",           "Accoya/Fir"],
+  ["fir",              "Accoya/Fir"],
+  ["hemlock",          "Mountain Hemlock"],
+  ["kebony",           "Kebony"],
+  ["abodo",            "Abodo"],
+  ["alder",            "Alder"],
+  ["walnut",           "Walnut"],
+  ["teak",             "Teak"],
+];
+
+const SPECIES_COLORS = {
+  "Cedar/Spruce/Ayous": "cedar",
+  "Oak/Cypress": "oak",
+  "Accoya/Fir": "accoya",
+  "Mountain Hemlock": "hemlock"
+};
+
+function resolveSpecies(raw) {
+  if (!raw) return null;
+  const lower = raw.toLowerCase().trim();
+  for (const [key, val] of SPECIES_MAP) {
+    if (lower.includes(key)) return val;
+  }
+  return null;
+}
+
+function normalizeSize(t, w) {
+  // Normalize fractions and sizes
+  t = String(t).trim().replace(/['"]/g, '').replace(/\s+/g,'');
+  w = String(w).trim().replace(/['"]/g, '').replace(/\s+/g,'');
+  
+  // Handle decimal thickness like 0.8125 -> 1, 1.25 -> 5/4, 1.5 -> 6/4
+  const tFloat = parseFloat(t);
+  let tNorm;
+  if (tFloat <= 1.05) tNorm = "1";
+  else if (tFloat <= 1.3) tNorm = "5/4";
+  else if (tFloat <= 1.6) tNorm = "6/4";
+  else if (tFloat <= 2.1) tNorm = "2";
+  else tNorm = t;
+
+  return `${tNorm}x${w}`;
+}
+
+function lookupWeight(speciesGroup, sizeStr) {
+  const table = weights[speciesGroup];
+  if (!table) return null;
+  // Try direct match first
+  if (table[sizeStr] !== undefined) return table[sizeStr];
+  // Try without spaces
+  const clean = sizeStr.replace(/\s/g,'');
+  for (const [k,v] of Object.entries(table)) {
+    if (k.replace(/\s/g,'') === clean) return v;
+  }
+  return null;
+}
+
+// ─── PDF Parsing ─────────────────────────────────────────────────
+async function parsePDF(file) {
+  setStatus('Parsing PDF...', '');
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  
+  let allText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // Get items with positions
+    const items = content.items.map(item => ({
+      text: item.str,
+      x: item.transform[4],
+      y: item.transform[5]
+    }));
+    // Sort by y descending (top to bottom), then x
+    items.sort((a,b) => b.y - a.y || a.x - b.x);
+    allText += items.map(i => i.str).join(' ') + '\n';
+  }
+
+  // Now extract structured data
+  return extractLineItems(allText, file);
+}
+
+async function extractLineItemsStructured(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let rows = [];
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+
+    const items = content.items.map(item => ({
+      text: item.str.trim(),
+      x: Math.round(item.transform[4]),
+      y: Math.round(item.transform[5]),
+      w: item.width
+    })).filter(i => i.text.length > 0);
+
+    // Group into rows by y position (within 4px)
+    const rowMap = {};
+    for (const item of items) {
+      const yKey = Math.round(item.y / 10) * 10;
+      if (!rowMap[yKey]) rowMap[yKey] = [];
+      rowMap[yKey].push(item);
+    }
+
+    const sortedYs = Object.keys(rowMap).map(Number).sort((a,b) => b - a);
+
+    // Find header row to determine column x positions
+    let colMap = null;
+    let headerY = null;
+
+    for (const y of sortedYs) {
+      const rowTexts = rowMap[y].map(i => i.text.toUpperCase()).join(' ');
+      if (rowTexts.includes('LINEAL') || rowTexts.includes('NOMINAL') || rowTexts.includes('GRADE')) {
+        // This is the header row
+        colMap = {};
+        for (const item of rowMap[y]) {
+          const t = item.text.toUpperCase();
+          if (t.includes('GRADE') || t.includes('SPECIES')) colMap.grade = item.x;
+          if (t.includes('NOMINAL')) colMap.nominal = item.x;
+          if (t.includes('NET') || t.includes('COVERAGE')) colMap.coverage = item.x;
+          if (t.includes('LINEAL') || t === 'LF') colMap.lf = item.x;
+          if (t.includes('LENGTH')) colMap.length = item.x;
+          if (t.includes('ITEM') || t === '#') colMap.item = item.x;
+        }
+        headerY = y;
+        break;
+      }
+    }
+
+    // Extract data rows below header
+    if (colMap && headerY !== null) {
+      const tolerance = 30;
+      for (const y of sortedYs) {
+        if (y >= headerY) continue; // skip header and above
+
+        const row = rowMap[y];
+        if (!row || row.length < 3) continue;
+
+        const getNearest = (targetX) => {
+          if (targetX === undefined) return '';
+          let best = null, bestDist = 9999;
+          for (const item of row) {
+            const dist = Math.abs(item.x - targetX);
+            if (dist < bestDist) { bestDist = dist; best = item; }
+          }
+          return bestDist < tolerance + 20 ? (best ? best.text : '') : '';
+        };
+
+        const nominal = getNearest(colMap.nominal);
+        const lfText = getNearest(colMap.lf);
+        const lengthText = getNearest(colMap.length);
+
+        // Skip if no numeric LF
+        const lf = parseFloat(lfText.replace(/,/g,''));
+        if (isNaN(lf) || lf <= 0) continue;
+
+        // Skip totals/summary rows
+        const rowStr = row.map(i=>i.text).join(' ');
+        const rowStrUpper = rowStr.toUpperCase();
+        if (rowStrUpper.includes('SUBTOTAL') || rowStrUpper.includes('GRAND TOTAL') || rowStrUpper.includes('FREIGHT')) continue;
+
+        // Scan ENTIRE row text for species keywords (longest match first)
+        const speciesKeywords = [
+          'WRC STK','WRC A&BTR','WRC A & BTR','Western Red Cedar',
+          'Douglas Fir','Mountain Hemlock',
+          '#2ESLP','2ESLP','ESLP','A&BTR','A & BTR',
+          'Cedar','WRC','Spruce','Ayous','STK',
+          'Cypress','Oak','Accoya','Fir','Hemlock',
+          'Kebony','Abodo','Alder','Walnut','Teak'
+        ];
+        let grade = '';
+        for (const kw of speciesKeywords) {
+          if (rowStr.toLowerCase().includes(kw.toLowerCase())) {
+            grade = kw; break;
+          }
+        }
+
+        // Parse nominal size
+        let thickness = '', width = '';
+        const nomMatch = nominal.match(/(\d+\/?\d*)\s*[xX×]\s*(\d+)/);
+        if (nomMatch) {
+          thickness = nomMatch[1];
+          width = nomMatch[2];
+        }
+
+        // Parse length from column
+        let boardLength = 0;
+        const rlMatch = lengthText.match(/RL[^0-9]*(\d+)/i);
+        const fixedMatch = lengthText.match(/^(\d+)/);
+        if (rlMatch) boardLength = parseInt(rlMatch[1]);
+        else if (fixedMatch) boardLength = parseInt(fixedMatch[1]);
+
+        // Fallback: scan only items near the length column x-position
+        if (!boardLength) {
+          const lengthX = colMap.length !== undefined ? colMap.length : 370;
+          const nearLengthItems = row.filter(i => Math.abs(i.x - lengthX) < 60);
+          for (const it of nearLengthItems) {
+            const m = it.text.match(/^(6|8|10|12|14|16|18|20)$/);
+            if (m) { boardLength = parseInt(m[1]); break; }
+          }
+        }
+        // Last resort: look for RL pattern anywhere in row
+        if (!boardLength) {
+          const rowStr = row.map(i => i.text).join(' ');
+          const rlFallback = rowStr.match(/RL[^0-9]*(\d+)/i);
+          if (rlFallback) boardLength = parseInt(rlFallback[1]);
+        }
+
+        if (grade || nominal) {
+          rows.push({ grade, nominal, thickness, width, lf, boardLength, rawLength: lengthText, rawGrade: grade });
+        }
+      }
+    }
+  }
+
+  return rows;
+}
+
+function extractLineItems(rawText, file) {
+  // Fallback regex parser if structured fails
+  const items = [];
+  // Look for patterns like: Spruce ... 1 x 6 ... 16 ... 2004
+  // or: WRC STK ... 1 x 12 ... 16 ... 704
+  const lines = rawText.split('\n');
+  
+  for (const line of lines) {
+    if (line.toUpperCase().includes('SUBTOTAL') || line.toUpperCase().includes('GRAND TOTAL')) continue;
+    
+    // Match lineal foot number (4+ digits or 3+ digits)
+    const lfMatch = line.match(/\b(\d{3,6})\s*$/);
+    if (!lfMatch) continue;
+    
+    const lf = parseInt(lfMatch[1]);
+    if (lf < 10) continue;
+    
+    // Match nominal size
+    const sizeMatch = line.match(/(\d+\/?\d*)\s*[xX×]\s*(\d+)/);
+    if (!sizeMatch) continue;
+    
+    const thickness = sizeMatch[1];
+    const width = sizeMatch[2];
+    
+    // Match length
+    let boardLength = 16; // default
+    const rlM = line.match(/RL[^0-9]*(\d+)/i);
+    const fixM = line.match(/\b(6|8|10|12|14|16|18|20)\b/);
+    if (rlM) boardLength = parseInt(rlM[1]);
+    else if (fixM) boardLength = parseInt(fixM[1]);
+    
+    // Match grade/species — longest match first
+    const gradePatterns = [
+      'WRC STK','WRC A&BTR','WRC A & BTR','Western Red Cedar',
+      'Douglas Fir','Mountain Hemlock',
+      '#2ESLP','2ESLP','ESLP','A&BTR','A & BTR',
+      'Cedar','WRC','Spruce','Ayous','STK',
+      'Cypress','Oak','Accoya','Fir','Hemlock',
+      'Kebony','Abodo','Alder','Walnut','Teak'
+    ];
+    let grade = '';
+    for (const p of gradePatterns) {
+      if (line.toLowerCase().includes(p.toLowerCase())) {
+        grade = p; break;
+      }
+    }
+    
+    if (grade || sizeMatch) {
+      items.push({ grade, thickness, width, lf, boardLength, rawLength: String(boardLength), rawGrade: grade });
+    }
+  }
+  
+  return items;
+}
+
+// ─── Ship-To Extraction ──────────────────────────────────────────
+async function extractShipTo(pdf) {
+  const page = await pdf.getPage(1);
+  const tc = await page.getTextContent();
+  const vp = page.getViewport({ scale: 1 });
+  const pageWidth = vp.width;
+
+  const rightItems = tc.items
+    .map(it => ({ text: it.str.trim(), x: it.transform[4], y: it.transform[5] }))
+    .filter(it => it.text.length > 2 && it.x > pageWidth * 0.5);
+
+  rightItems.sort((a, b) => b.y - a.y);
+
+  let shippingHeaderY = null;
+  for (const it of rightItems) {
+    if (it.text.toUpperCase().includes('SHIPPING INFORMATION')) {
+      shippingHeaderY = it.y;
+      break;
+    }
+  }
+
+  const candidates = shippingHeaderY !== null
+    ? rightItems.filter(it => it.y < shippingHeaderY)
+    : rightItems;
+
+  const statePattern = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/;
+  const streetPattern = /^\d+\s|\b(st|ave|blvd|dr|rd|ln|way|ct|pl|hwy|ranch|peak|lot|suite|floor)\b/i;
+  const skipPattern = /^(prices|subject|minimum|final|deposit|sales|lead|sample|confirm|approximate)/i;
+
+  // Filter noise
+  const clean = candidates.filter(it => {
+    const t = it.text;
+    if (t.includes('@') || /^[\d\s()\-+]+$/.test(t)) return false;
+    if (skipPattern.test(t)) return false;
+    return true;
+  });
+
+  // Find city/state/zip line
+  let stateIdx = -1;
+  for (let i = 0; i < clean.length; i++) {
+    if (statePattern.test(clean[i].text)) { stateIdx = i; break; }
+  }
+
+  let addressLine = '';
+  if (stateIdx !== -1) {
+    const cityLine = clean[stateIdx].text;
+    const stateY = clean[stateIdx].y;
+    // Look for a street line just above (within ~25px)
+    const streetAbove = clean.slice(0, stateIdx).reverse().find(it =>
+      Math.abs(it.y - stateY) < 25 && (streetPattern.test(it.text) || /^\d/.test(it.text))
+    );
+    addressLine = streetAbove
+      ? streetAbove.text.replace(/^jobsite[:\s]*/i, '').trim() + ', ' + cityLine
+      : cityLine;
+  }
+
+  // Fallback to street pattern only
+  if (!addressLine) {
+    const st = clean.find(it => streetPattern.test(it.text));
+    if (st) addressLine = st.text;
+  }
+
+  return addressLine.replace(/^jobsite[:\s]*/i, '').trim();
+}
+
+// ─── Main Process ────────────────────────────────────────────────
+async function processFile(file) {
+  document.getElementById('fileName').textContent = file.name;
+  setStatus('Parsing PDF...', '');
+
+  try {
+    // Try structured column-based extraction first
+    let rows = await extractLineItemsStructured(file);
+
+    // Always do a full text pass to extract jobsite address
+    const arrayBuffer2 = await file.arrayBuffer();
+    const pdf2 = await pdfjsLib.getDocument({ data: arrayBuffer2 }).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf2.numPages; i++) {
+      const page = await pdf2.getPage(i);
+      const tc = await page.getTextContent();
+      fullText += tc.items.map(it => it.str).join(' ') + '\n';
+    }
+    // Extract ship-to address from top-right of page (shipping info section)
+    window._shipTo = await extractShipTo(pdf2);
+
+    // Fall back to text/regex extraction if structured finds nothing
+    if (rows.length === 0) {
+      rows = extractLineItems(fullText, file);
+    }
+
+    if (rows.length === 0) {
+      setStatus('Could not extract line items. Check PDF format.', 'err');
+      return;
+    }
+
+    // Enrich with species + weights
+    lineItems = rows.map((row, idx) => {
+      const speciesGroup = resolveSpecies(row.rawGrade || row.grade);
+      const sizeStr = (row.thickness && row.width) ? normalizeSize(row.thickness, row.width) : '';
+      const wPerLF = speciesGroup && sizeStr ? lookupWeight(speciesGroup, sizeStr) : null;
+      const roundedLF = Math.ceil(row.lf / 5) * 5;
+      const rawWeight = wPerLF ? wPerLF * roundedLF : null;
+      const totalWeight = rawWeight !== null ? Math.ceil(rawWeight / 5) * 5 : null;
+      const flagged = !speciesGroup || !wPerLF;
+
+      return {
+        id: idx + 1,
+        grade: row.rawGrade || 'Unknown',
+        speciesGroup,
+        nominal: row.nominal || `${row.thickness}x${row.width}`,
+        sizeStr,
+        lf: row.lf,
+        roundedLF,
+        boardLength: row.boardLength || 16,
+        rawLength: row.rawLength,
+        wPerLF,
+        totalWeight,
+        flagged
+      };
+    });
+
+    renderLineItems();
+    calculatePallets();
+    setStatus(`✓ Extracted ${lineItems.length} line item${lineItems.length !== 1 ? 's' : ''}`, 'ok');
+
+  } catch (err) {
+    console.error(err);
+    setStatus('Error parsing PDF: ' + err.message, 'err');
+  }
+}
+
+function renderLineItems() {
+  const container = document.getElementById('lineItemsContainer');
+  if (lineItems.length === 0) {
+    container.innerHTML = '<div class="empty-state">No items extracted</div>';
+    return;
+  }
+
+  let html = '<div style="overflow-x:auto;"><table><thead><tr>';
+  html += '<th>#</th><th>Species / Grade</th><th>Size</th><th>Length</th><th>Lineal Ft</th><th>lbs/LF</th><th>Total lbs</th>';
+  html += '</tr></thead><tbody>';
+
+  for (const item of lineItems) {
+    const colorClass = item.speciesGroup ? (SPECIES_COLORS[item.speciesGroup] || 'other') : 'unknown';
+    const label = item.speciesGroup || item.grade;
+    const flagIcon = item.flagged ? `<span class="flag-warn" title="Weight not found — verify manually">⚠ flag</span>` : '';
+    const wt = item.wPerLF !== null ? item.wPerLF.toFixed(2) : '—';
+    const tw = item.totalWeight !== null ? item.totalWeight.toLocaleString(undefined,{maximumFractionDigits:0}) : '—';
+
+    html += `<tr>
+      <td style="color:var(--muted)">${item.id}</td>
+      <td><span class="species-tag tag-${colorClass}">${label}</span> ${flagIcon}</td>
+      <td style="color:var(--text)">${item.sizeStr || item.nominal}</td>
+      <td style="color:var(--muted)">${item.rawLength || item.boardLength + "'"}</td>
+      <td style="color:var(--text);font-weight:600">${item.lf.toLocaleString()} <span style='color:var(--muted);font-size:0.65rem'>(→${item.roundedLF})</span></td>
+      <td style="color:var(--muted)">${wt}</td>
+      <td style="color:${item.totalWeight ? 'var(--accent)' : 'var(--danger)'};font-weight:600">${tw}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function calculatePallets() {
+  const PALLET_MAX_LBS = 3500;
+  const PALLET_W = 48; // inches
+  const PALLET_D = 48; // inches
+
+  // Get total weight of known items
+  const knownItems = lineItems.filter(i => i.totalWeight !== null);
+  const unknownItems = lineItems.filter(i => i.totalWeight === null);
+
+  if (knownItems.length === 0) {
+    document.getElementById('palletCards').innerHTML = '<div class="empty-state">No weight data available</div>';
+    document.getElementById('totalPallets').textContent = '—';
+    document.getElementById('totalWeight').textContent = '—';
+    return;
+  }
+
+  // Total lumber weight and pallet count
+  const totalLumberWeight = knownItems.reduce((s,i) => s + i.totalWeight, 0);
+  const palletCount = Math.ceil(totalLumberWeight / PALLET_MAX_LBS);
+  const weightPerPallet = totalLumberWeight / palletCount;
+
+  // All pallets are identical — same weight, same dimensions
+  const maxBoardLength = Math.max(...knownItems.map(i => i.boardLength || 16));
+  const palletLengthIn = (maxBoardLength * 12) + 4;
+
+  // Height = (weight per pallet / 3500) x 48, round up to nearest 2", add 2" wiggle room
+  const fillRatio = weightPerPallet / PALLET_MAX_LBS;
+  const rawHeight = fillRatio * 48;
+  const roundedHeight = Math.ceil(rawHeight / 2) * 2;
+  const palletHeight = roundedHeight + 2;
+
+  // Width = same as height
+  const palletWidth = palletHeight;
+
+  const speciesList = [...new Set(knownItems.map(i => i.speciesGroup || i.grade))];
+
+  // Build identical pallet objects
+  let pallets = [];
+  for (let i = 0; i < palletCount; i++) {
+    pallets.push({
+      num: i + 1,
+      weight: Math.round(weightPerPallet),
+      length: palletLengthIn,
+      width: palletWidth,
+      height: palletHeight,
+      species: speciesList,
+      isFull: palletCount === 1 && weightPerPallet >= PALLET_MAX_LBS * 0.99
+    });
+  }
+
+  const totalPallets = pallets.length;
+  const grandTotalWeight = totalLumberWeight + (totalPallets * 150);
+
+  document.getElementById('totalPallets').textContent = totalPallets;
+  document.getElementById('totalWeight').textContent = Math.round(grandTotalWeight).toLocaleString();
+
+  // Store pallets globally for dropdown
+  window._pallets = pallets;
+
+  // Build dropdown options
+  const selectHTML = pallets.length > 1 ? `
+    <select id="palletSelect" onchange="showPallet(this.value)" style="
+      width:100%;
+      background:var(--bg);
+      border:1px solid var(--border);
+      color:var(--text);
+      font-family:'IBM Plex Mono',monospace;
+      font-size:0.75rem;
+      padding:7px 10px;
+      border-radius:2px;
+      margin-bottom:12px;
+      cursor:pointer;
+    ">
+      ${pallets.map(p => {
+        const fillPct = Math.round((p.weight / PALLET_MAX_LBS) * 100);
+        return `<option value="${p.num - 1}">P${p.num} — ${fillPct}% full · ${Math.round(p.weight).toLocaleString()} lbs</option>`;
+      }).join('')}
+    </select>` : '';
+
+  // Build all pallet cards (hidden by default except first)
+  let cardsHTML = selectHTML;
+  for (const p of pallets) {
+    const fillPct = Math.round((p.weight / PALLET_MAX_LBS) * 100);
+    const borderColor = p.isFull ? 'var(--accent)' : 'var(--warn)';
+    cardsHTML += `
+      <div class="pallet-card" id="palletCard${p.num}" style="border-left-color:${borderColor};display:${p.num === 1 ? 'block' : 'none'}">
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <div class="pallet-num">P${p.num}</div>
+          <div class="pallet-label">${fillPct}% full · ${Math.round(p.weight).toLocaleString()} lbs</div>
+        </div>
+        <div class="pallet-dims">${p.length}" × ${p.width}" × ${p.height}"</div>
+        <div class="pallet-weight">L × W × H</div>
+        <div class="pallet-species-list">${p.species.join(' · ')}</div>
+      </div>`;
+  }
+
+  if (unknownItems.length > 0) {
+    cardsHTML += `<div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--danger);padding:10px 0;border-top:1px solid var(--border);margin-top:6px;">
+      ⚠ ${unknownItems.length} item(s) flagged — weights unknown, not included in totals
+    </div>`;
+  }
+
+  document.getElementById('palletCards').innerHTML = cardsHTML;
+  buildWorkBreakdown(lineItems, pallets, totalLumberWeight, palletCount, weightPerPallet);
+  updateEmailLink();
+}
+
+// ─── Weight Editor ───────────────────────────────────────────────
+function toggleEditor() {
+  const body = document.getElementById('weightEditorBody');
+  const summary = document.getElementById('weightSummary');
+  if (body.style.display === 'none') {
+    renderWeightEditor();
+    body.style.display = 'block';
+    summary.style.display = 'none';
+  } else {
+    body.style.display = 'none';
+    summary.style.display = 'block';
+  }
+}
+
+function renderWeightEditor() {
+  const container = document.getElementById('weightEditor');
+  let html = '';
+  for (const [group, dims] of Object.entries(weights)) {
+    html += `<div class="group-header">${group}</div>`;
+    for (const [dim, val] of Object.entries(dims)) {
+      html += `<div class="weight-row">
+        <strong>${dim}</strong>
+        <input type="number" step="0.01" value="${val}" data-group="${group}" data-dim="${dim}" />
+        <span>lbs/LF</span>
+      </div>`;
+    }
+  }
+  container.innerHTML = html;
+}
+
+function saveWeights() {
+  const inputs = document.querySelectorAll('#weightEditor input[type="number"]');
+  for (const input of inputs) {
+    const group = input.dataset.group;
+    const dim = input.dataset.dim;
+    const val = parseFloat(input.value);
+    if (!isNaN(val) && weights[group]) {
+      weights[group][dim] = val;
+    }
+  }
+  localStorage.setItem('palletWeights', JSON.stringify(weights));
+  toggleEditor();
+  if (lineItems.length > 0) {
+    // Recalculate with new weights
+    lineItems = lineItems.map(item => {
+      const wPerLF = item.speciesGroup && item.sizeStr ? lookupWeight(item.speciesGroup, item.sizeStr) : null;
+      const roundedLF = Math.ceil(item.lf / 5) * 5;
+      const totalWeight = wPerLF ? wPerLF * roundedLF : null;
+      return { ...item, wPerLF, totalWeight, flagged: !item.speciesGroup || !wPerLF };
+    });
+    renderLineItems();
+    calculatePallets();
+  }
+  setStatus('Weights saved.', 'ok');
+}
+
+// ─── Pallet Dropdown ─────────────────────────────────────────────
+function showPallet(idx) {
+  const pallets = window._pallets || [];
+  pallets.forEach(p => {
+    const el = document.getElementById('palletCard' + p.num);
+    if (el) el.style.display = parseInt(idx) === p.num - 1 ? 'block' : 'none';
+  });
+}
+
+// ─── Work Breakdown ──────────────────────────────────────────────
+function toggleWorkShown() {
+  const el = document.getElementById('workBreakdown');
+  const btn = document.getElementById('showWorkBtn');
+  const visible = el.style.display !== 'none';
+  el.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '▾ Show Work' : '▴ Hide Work';
+}
+
+function buildWorkBreakdown(lineItems, pallets, totalLumberWeight, palletCount, weightPerPallet) {
+  const PALLET_MAX = 3500;
+  const btn = document.getElementById('showWorkBtn');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+
+  const knownItems = lineItems.filter(i => i.totalWeight !== null);
+  if (knownItems.length === 0) return;
+
+  let html = '';
+
+  // Step 1: Per-item weight calc
+  html += `<div class="work-step">
+    <div class="work-step-title">Step 1 — Weight Per Line Item</div>`;
+  for (const item of knownItems) {
+    html += `<div class="work-line">
+      Item ${item.id} · ${item.speciesGroup} ${item.sizeStr}
+      &nbsp;→&nbsp; ${item.lf.toLocaleString()} LF
+      → rounded up to nearest 5 = <span class="work-result">${item.roundedLF.toLocaleString()} LF</span>
+      &nbsp;×&nbsp; ${item.wPerLF} lbs/LF
+      = <span class="work-result">${(item.wPerLF * item.roundedLF).toLocaleString(undefined,{maximumFractionDigits:1})} lbs</span>
+      → rounded up to nearest 5 = <span class="work-result">${item.totalWeight.toLocaleString()} lbs</span>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Step 2: Total lumber weight
+  html += `<div class="work-step">
+    <div class="work-step-title">Step 2 — Total Lumber Weight</div>
+    <div class="work-line">${knownItems.map(i => i.totalWeight.toLocaleString()).join(' + ')}
+    = <span class="work-result">${totalLumberWeight.toLocaleString()} lbs</span></div>
+  </div>`;
+
+  // Step 3: Pallet count
+  html += `<div class="work-step">
+    <div class="work-step-title">Step 3 — Number of Pallets</div>
+    <div class="work-line">${totalLumberWeight.toLocaleString()} ÷ ${PALLET_MAX.toLocaleString()} = ${(totalLumberWeight/PALLET_MAX).toFixed(3)}
+    → round up = <span class="work-result">${palletCount} pallet${palletCount !== 1 ? 's' : ''}</span></div>
+  </div>`;
+
+  // Step 4: Weight per pallet
+  html += `<div class="work-step">
+    <div class="work-step-title">Step 4 — Weight Per Pallet</div>
+    <div class="work-line">${totalLumberWeight.toLocaleString()} ÷ ${palletCount} = <span class="work-result">${Math.round(weightPerPallet).toLocaleString()} lbs</span>
+    &nbsp;(${Math.round((weightPerPallet/PALLET_MAX)*100)}% of max capacity)</div>
+  </div>`;
+
+  // Step 5: Pallet dimensions
+  const p = pallets[0];
+  const fillRatio = (weightPerPallet / PALLET_MAX);
+  const rawH = fillRatio * 48;
+  const roundedH = Math.ceil(rawH / 2) * 2;
+  const finalH = roundedH + 2;
+  html += `<div class="work-step">
+    <div class="work-step-title">Step 5 — Pallet Height & Width</div>
+    <div class="work-line">${Math.round(weightPerPallet).toLocaleString()} ÷ ${PALLET_MAX} = ${fillRatio.toFixed(4)} fill ratio</div>
+    <div class="work-line">${fillRatio.toFixed(4)} × 48" = ${rawH.toFixed(2)}"
+    → round up to nearest 2" = ${roundedH}"
+    → +2" buffer = <span class="work-result">${finalH}"</span></div>
+  </div>`;
+
+  // Step 6: Pallet length
+  const maxLen = Math.max(...knownItems.map(i => i.boardLength || 16));
+  html += `<div class="work-step">
+    <div class="work-step-title">Step 6 — Pallet Length</div>
+    <div class="work-line">Longest board: ${maxLen}' × 12 = ${maxLen*12}"
+    → +4" overhang = <span class="work-result">${maxLen*12+4}"</span></div>
+  </div>`;
+
+  // Step 7: Total shipping weight
+  const totalShipping = totalLumberWeight + (palletCount * 150);
+  html += `<div class="work-step">
+    <div class="work-step-title">Step 7 — Total Shipping Weight</div>
+    <div class="work-line">${totalLumberWeight.toLocaleString()} lbs lumber
+    + (${palletCount} × 150 lbs/pallet)
+    = <span class="work-result">${Math.round(totalShipping).toLocaleString()} lbs</span></div>
+  </div>`;
+
+  // Summary
+  html += `<hr class="work-divider">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--accent);padding:4px 0;">
+    RESULT: ${palletCount} unit${palletCount!==1?'s':''} · ${p.length}" × ${p.width}" × ${p.height}" · ${Math.round(totalShipping).toLocaleString()} lbs total
+  </div>`;
+
+  document.getElementById('workContent').innerHTML = html;
+}
+
+// ─── Utilities ───────────────────────────────────────────────────
+function setStatus(msg, type) {
+  const bar = document.getElementById('statusBar');
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + (type || '');
+}
+
+function clearAll() {
+  lineItems = [];
+  window._shipTo = '';
+  window._pallets = [];
+  document.getElementById('lineItemsContainer').innerHTML = '<div class="empty-state">No items yet — upload a PDF to begin</div>';
+  document.getElementById('palletCards').innerHTML = '<div class="empty-state">Results appear after upload</div>';
+  document.getElementById('totalPallets').textContent = '—';
+  document.getElementById('totalWeight').textContent = '—';
+  document.getElementById('fileName').textContent = '';
+  document.getElementById('fileInput').value = '';
+  updateEmailLink();
+  document.getElementById('workBreakdown').style.display = 'none';
+  document.getElementById('workContent').innerHTML = '';
+  const swb = document.getElementById('showWorkBtn');
+  swb.textContent = '▾ Show Work';
+  swb.style.opacity = '0.4';
+  swb.style.pointerEvents = 'none';
+  setStatus('Cleared — ready for next estimate.', '');
+}
+
+// ─── Recipients ──────────────────────────────────────────────────
+const DEFAULT_RECIPIENTS = [
+  { name: 'Tyler Raz',          email: 'tylerr@openroad.inc',    role: 'to',  selected: true  },
+  { name: 'Erik Whitney',       email: 'erik@hewn.com',           role: 'cc',  selected: true  },
+  { name: 'Carie Bruce',        email: 'carie@hewn.com',          role: 'cc',  selected: true  },
+  { name: 'Christopher Harper', email: 'christopherh@openroad.inc', role: 'cc', selected: true },
+  { name: 'Steve Greer',        email: 'steveg@openroad.inc',     role: 'cc',  selected: true  },
+];
+let recipients = JSON.parse(localStorage.getItem('palletRecipients') || 'null') || JSON.parse(JSON.stringify(DEFAULT_RECIPIENTS));
+// Migrate old data that doesn't have role field — reset to defaults
+if (recipients.length > 0 && !recipients[0].role) {
+  recipients = JSON.parse(JSON.stringify(DEFAULT_RECIPIENTS));
+  saveRecipients();
+}
+
+function saveRecipients() {
+  localStorage.setItem('palletRecipients', JSON.stringify(recipients));
+}
+
+function renderRecipients() {
+  const list = document.getElementById('recipientList');
+  const msg  = document.getElementById('noRecipientsMsg');
+  const btn  = document.getElementById('sendEmailBtn');
+
+  if (recipients.length === 0) {
+    list.innerHTML = '';
+    msg.style.display = 'block';
+    updateEmailLink();
+    return;
+  }
+  msg.style.display = 'none';
+  list.innerHTML = recipients.map((r, i) => {
+    const isPrimary = r.role === 'to';
+    const badge = isPrimary
+      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:1px 6px;border-radius:2px;background:rgba(200,169,74,0.15);color:var(--accent);border:1px solid rgba(200,169,74,0.3);">TO</span>`
+      : `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:1px 6px;border-radius:2px;background:rgba(136,136,128,0.15);color:var(--muted);border:1px solid rgba(136,136,128,0.3);">CC</span>`;
+    const disabled = isPrimary ? 'style="pointer-events:none;opacity:0.5;"' : '';
+    return `
+    <div class="recipient-row ${r.selected ? 'selected' : ''}" onclick="${isPrimary ? '' : `toggleRecipient(${i})`}">
+      <input type="checkbox" ${r.selected ? 'checked' : ''} ${isPrimary ? 'disabled' : ''} onclick="event.stopPropagation();toggleRecipient(${i})" />
+      ${badge}
+      <span class="recipient-name">${r.name}</span>
+      <span class="recipient-email">${r.email}</span>
+    </div>`;
+  }).join('');
+  updateEmailLink();
+}
+
+function renderRecipientEditor() {
+  const el = document.getElementById('recipientEditorList');
+  if (recipients.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = recipients.map((r, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(58,58,52,0.4);">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:1px 6px;border-radius:2px;background:${r.role==='to'?'rgba(200,169,74,0.15)':'rgba(136,136,128,0.15)'};color:${r.role==='to'?'var(--accent)':'var(--muted)'};border:1px solid ${r.role==='to'?'rgba(200,169,74,0.3)':'rgba(136,136,128,0.3)'};">${r.role.toUpperCase()}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;flex:1;color:var(--text);">${r.name}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);">${r.email}</span>
+      ${r.role !== 'to' ? `<button onclick="removeRecipient(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.9rem;padding:2px 6px;">✕</button>` : '<span style="width:24px;"></span>'}
+    </div>
+  `).join('');
+}
+
+function toggleRecipient(i) {
+  recipients[i].selected = !recipients[i].selected;
+  saveRecipients();
+  renderRecipients();
+}
+
+function addRecipient() {
+  const name  = document.getElementById('newRecipientName').value.trim();
+  const email = document.getElementById('newRecipientEmail').value.trim();
+  if (!name || !email) return;
+  recipients.push({ name, email, role: 'cc', selected: false });
+  saveRecipients();
+  document.getElementById('newRecipientName').value = '';
+  document.getElementById('newRecipientEmail').value = '';
+  renderRecipients();
+  renderRecipientEditor();
+}
+
+function removeRecipient(i) {
+  recipients.splice(i, 1);
+  saveRecipients();
+  renderRecipients();
+  renderRecipientEditor();
+}
+
+function toggleRecipientEditor() {
+  const panel = document.getElementById('recipientEditorPanel');
+  const isHidden = panel.style.display === 'none';
+  panel.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) renderRecipientEditor();
+}
+
+function buildGmailUrl() {
+  const toRecipients = recipients.filter(r => r.selected && r.role === 'to');
+  const ccRecipients = recipients.filter(r => r.selected && r.role === 'cc');
+  if (toRecipients.length === 0) return;
+
+  const to = toRecipients.map(r => r.email).join(',');
+  const cc = ccRecipients.map(r => r.email).join(',');
+
+  const primaryName = toRecipients[0].name.split(' ')[0];
+
+  const fileName = document.getElementById('fileName').textContent;
+  const projectName = fileName ? fileName.replace(/\.pdf$/i, '').replace(/_/g, ' ') : 'Lumber Order';
+  const subject = encodeURIComponent(`Budgetary Shipping Quote — ${projectName}`);
+
+  const totalPallets = document.getElementById('totalPallets').textContent;
+  const totalWeight  = document.getElementById('totalWeight').textContent;
+
+  // Get dims from first visible pallet card
+  let dims = '';
+  const allCards = document.querySelectorAll('.pallet-card');
+  if (allCards.length > 0) {
+    const dimsEl = allCards[0].querySelector('.pallet-dims');
+    if (dimsEl) dims = dimsEl.textContent.trim();
+  }
+
+  const body = encodeURIComponent(
+`Hello ${primaryName},
+
+Can I please get a budgetary quote for this order shipping in about 12-14 weeks.
+
+Approx:
+${totalPallets} stackable units
+${totalWeight} lbs total
+${dims}
+Tarped, side curtain or conestoga
+
+Going to: ${window._shipTo || '[DESTINATION ADDRESS]'}
+
+Thanks,
+Braylon`
+  );
+
+  const ccParam = cc ? `&cc=${encodeURIComponent(cc)}` : '';
+  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}${ccParam}&su=${subject}&body=${body}`;
+  return url;
+}
+
+function updateEmailLink() {
+  const el = document.getElementById('sendEmailBtn');
+  if (!el) return;
+  const toRecipients = recipients.filter(r => r.selected && r.role === 'to');
+  const hasSelected = recipients.some(r => r.selected);
+  el.style.opacity = (toRecipients.length > 0 && hasSelected) ? '1' : '0.4';
+  el.style.pointerEvents = (toRecipients.length > 0 && hasSelected) ? 'auto' : 'none';
+}
+
+function showEmailModal() {
+  const url = buildGmailUrl();
+  if (!url) return;
+
+  const toRecipients = recipients.filter(r => r.selected && r.role === 'to');
+  const ccRecipients = recipients.filter(r => r.selected && r.role === 'cc');
+
+  document.getElementById('modalRecipients').innerHTML =
+    `<span style="color:var(--accent)">TO:</span> ${toRecipients.map(r => r.name + ' &lt;' + r.email + '&gt;').join(', ')}<br>` +
+    (ccRecipients.length ? `<span style="color:var(--muted)">CC:</span> ${ccRecipients.map(r => r.name + ' &lt;' + r.email + '&gt;').join(', ')}` : '');
+
+  // Build plain body text for textarea
+  const toR = toRecipients[0];
+  const primaryName = toR ? toR.name.split(' ')[0] : 'Tyler';
+  const fileName = document.getElementById('fileName').textContent;
+  const projectName = fileName ? fileName.replace(/\.pdf$/i, '').replace(/_/g, ' ') : 'Lumber Order';
+  const totalPallets = document.getElementById('totalPallets').textContent;
+  const totalWeight  = document.getElementById('totalWeight').textContent;
+  let dims = '';
+  const allCards = document.querySelectorAll('.pallet-card');
+  if (allCards.length > 0) { const d = allCards[0].querySelector('.pallet-dims'); if (d) dims = d.textContent.trim(); }
+
+  document.getElementById('modalBody').value =
+`Hello ${primaryName},
+
+Can I please get a budgetary quote for this order shipping in about 12-14 weeks.
+
+Approx:
+${totalPallets} stackable units
+${totalWeight} lbs total
+${dims}
+Tarped, side curtain or conestoga
+
+Going to: ${window._shipTo || '[DESTINATION ADDRESS]'}
+
+Thanks,
+Braylon`;
+
+  document.getElementById('modalGmailLink').href = url;
+  document.getElementById('emailModal').style.display = 'flex';
+}
+
+function closeEmailModal() {
+  document.getElementById('emailModal').style.display = 'none';
+}
+
+function copyEmailBody() {
+  const ta = document.getElementById('modalBody');
+  ta.select();
+  document.execCommand('copy');
+  setStatus('Email body copied to clipboard.', 'ok');
+  closeEmailModal();
+}
+
+// Init recipients on load
+renderRecipients();
+
+// ─── Events ──────────────────────────────────────────────────────
+const fileInput = document.getElementById('fileInput');
+const zone = document.getElementById('uploadZone');
+
+// Click zone -> open file picker
+zone.addEventListener('click', (e) => {
+  if (e.target !== fileInput) fileInput.click();
+});
+
+// File selected via picker
+fileInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (f) processFile(f);
+});
+
+// Drag and drop
+zone.addEventListener('dragenter', (e) => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragover',  (e) => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', (e) => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag'); });
+zone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  zone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'))) {
+    processFile(f);
+  } else {
+    setStatus('Please drop a PDF file.', 'err');
+  }
+});
+</script>
+
+<div id="emailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);max-width:560px;width:90%;border-radius:2px;overflow:hidden;">
+    <div style="background:var(--panel);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);">Email Draft</span>
+      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;">✕</button>
+    </div>
+    <div style="padding:16px 18px;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);margin-bottom:6px;letter-spacing:1px;">TO / CC</div>
+      <div id="modalRecipients" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text);margin-bottom:14px;line-height:1.7;"></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);margin-bottom:6px;letter-spacing:1px;">BODY</div>
+      <textarea id="modalBody" readonly style="width:100%;height:220px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.72rem;padding:10px;border-radius:2px;resize:none;line-height:1.6;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <a id="modalGmailLink" href="#" target="_blank" class="btn btn-primary" style="flex:1;text-align:center;text-decoration:none;display:block;padding:9px 18px;">
+          Open in Gmail ↗
+        </a>
+        <button onclick="copyEmailBody()" class="btn btn-ghost" style="flex:1;">Copy Body</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
