@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,7 +103,7 @@
     position: relative;
   }
   .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(200,169,74,0.05); }
-  .upload-zone input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
   .upload-icon { font-size: 2rem; margin-bottom: 10px; }
   .upload-zone p { color: var(--muted); font-size: 0.85rem; }
   .upload-zone strong { color: var(--accent); }
@@ -292,42 +293,6 @@
 
   .actions { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
 
-  .email-panel { margin-top: 0; }
-
-  .recipient-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-  .recipient-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 10px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .recipient-row:hover { border-color: var(--accent); }
-  .recipient-row.selected { border-color: var(--accent); background: rgba(200,169,74,0.07); }
-  .recipient-row input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
-  .recipient-name { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--text); flex: 1; }
-  .recipient-email { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); }
-
-  .work-step {
-    border-left: 2px solid var(--border);
-    padding: 6px 0 6px 12px;
-    margin: 6px 0;
-  }
-  .work-step-title {
-    font-size: 0.62rem;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 4px;
-  }
-  .work-line { color: var(--muted); font-size: 0.7rem; line-height: 1.8; }
-  .work-result { color: var(--text); font-weight: 600; }
-  .work-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
-
   .pallet-species-list {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.68rem;
@@ -335,6 +300,25 @@
     margin-top: 6px;
     line-height: 1.6;
   }
+
+  .email-panel { margin-top: 0; }
+  .recipient-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .recipient-row {
+    display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 2px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .recipient-row:hover { border-color: var(--accent); }
+  .recipient-row.selected { border-color: var(--accent); background: rgba(200,169,74,0.07); }
+  .recipient-row input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+  .recipient-name { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--text); flex: 1; }
+  .recipient-email { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+  .work-step { border-left: 2px solid var(--border); padding: 6px 0 6px 12px; margin: 6px 0; }
+  .work-step-title { font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .work-line { color: var(--muted); font-size: 0.7rem; line-height: 1.8; }
+  .work-result { color: var(--text); font-weight: 600; }
+  .work-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
 </style>
 </head>
 <body>
@@ -365,14 +349,12 @@
         </div>
       </div>
       <div class="status-bar" id="statusBar">Waiting for file...</div>
-      <div id="debugPanel" style="display:none;background:#111;border:1px solid #c85a3a;padding:10px 14px;font-family:IBM Plex Mono,monospace;font-size:0.72rem;color:#e8e4d8;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;"></div>
     </div>
 
     <!-- Line Items -->
     <div class="panel">
       <div class="panel-header">
         <span>02 — Extracted Line Items</span>
-        <button class="btn btn-ghost" id="clearBtn" style="padding:4px 10px;font-size:0.65rem;" onclick="clearAll()">Clear</button>
       </div>
       <div id="lineItemsContainer">
         <div class="empty-state">No items yet — upload a PDF to begin</div>
@@ -403,7 +385,6 @@
         <div class="pallet-cards" id="palletCards">
           <div class="empty-state">Results appear after upload</div>
         </div>
-
         <!-- Work breakdown -->
         <div id="workBreakdown" style="display:none;border-top:1px solid var(--border);padding:16px;">
           <div id="workContent" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;line-height:2;color:var(--text);"></div>
@@ -429,7 +410,7 @@
       </div>
     </div>
 
-    <!-- Recipient Editor (hidden by default) -->
+    <!-- Recipient Editor -->
     <div class="panel" id="recipientEditorPanel" style="display:none;">
       <div class="panel-header"><span>Manage Recipients</span></div>
       <div class="panel-body">
@@ -446,7 +427,6 @@
     </div>
 
     <!-- Weight Editor -->
-
     <div class="panel">
       <div class="panel-header">
         <span>Weight Table (lbs/LF)</span>
@@ -512,8 +492,6 @@ const SPECIES_MAP = [
   ["2eslp",            "Cedar/Spruce/Ayous"],
   ["eslp",             "Cedar/Spruce/Ayous"],
   ["a&btr",            "Cedar/Spruce/Ayous"],
-  ["a&better",          "Cedar/Spruce/Ayous"],
-  ["a better",          "Cedar/Spruce/Ayous"],
   ["a & btr",          "Cedar/Spruce/Ayous"],
   ["cedar",            "Cedar/Spruce/Ayous"],
   ["wrc",              "Cedar/Spruce/Ayous"],
@@ -568,13 +546,30 @@ function normalizeSize(t, w) {
 function lookupWeight(speciesGroup, sizeStr) {
   const table = weights[speciesGroup];
   if (!table) return null;
+
   // Try direct match first
   if (table[sizeStr] !== undefined) return table[sizeStr];
+
   // Try without spaces
   const clean = sizeStr.replace(/\s/g,'');
   for (const [k,v] of Object.entries(table)) {
     if (k.replace(/\s/g,'') === clean) return v;
   }
+
+  // Fallback: if thickness > 1, use thickness as multiplier against 1x equivalent
+  // e.g. 3x4 = 3 × (1x4 weight), 4x6 = 4 × (1x6 weight)
+  const parts = clean.match(/^(\d+)x(\d+)$/);
+  if (parts) {
+    const thickness = parseInt(parts[1]);
+    const width = parts[2];
+    if (thickness > 1) {
+      const oneX = `1x${width}`;
+      for (const [k,v] of Object.entries(table)) {
+        if (k.replace(/\s/g,'') === oneX) return v * thickness;
+      }
+    }
+  }
+
   return null;
 }
 
@@ -623,7 +618,7 @@ async function extractLineItemsStructured(file) {
     // Group into rows by y position (within 4px)
     const rowMap = {};
     for (const item of items) {
-      const yKey = Math.round(item.y / 10) * 10;
+      const yKey = Math.round(item.y / 5) * 5;
       if (!rowMap[yKey]) rowMap[yKey] = [];
       rowMap[yKey].push(item);
     }
@@ -709,28 +704,11 @@ async function extractLineItemsStructured(file) {
           width = nomMatch[2];
         }
 
-        // Parse length from column
+        // Parse length
         let boardLength = 0;
-        const rlMatch = lengthText.match(/RL[^0-9]*(\d+)/i);
-        const fixedMatch = lengthText.match(/^(\d+)/);
-        if (rlMatch) boardLength = parseInt(rlMatch[1]);
-        else if (fixedMatch) boardLength = parseInt(fixedMatch[1]);
-
-        // Fallback: scan only items near the length column x-position
-        if (!boardLength) {
-          const lengthX = colMap.length !== undefined ? colMap.length : 370;
-          const nearLengthItems = row.filter(i => Math.abs(i.x - lengthX) < 60);
-          for (const it of nearLengthItems) {
-            const m = it.text.match(/^(6|8|10|12|14|16|18|20)$/);
-            if (m) { boardLength = parseInt(m[1]); break; }
-          }
-        }
-        // Last resort: look for RL pattern anywhere in row
-        if (!boardLength) {
-          const rowStr = row.map(i => i.text).join(' ');
-          const rlFallback = rowStr.match(/RL[^0-9]*(\d+)/i);
-          if (rlFallback) boardLength = parseInt(rlFallback[1]);
-        }
+        const allNums1 = lengthText.match(/\d+/g);
+        if (allNums1) boardLength = Math.max(...allNums1.map(Number));
+        else boardLength = 16;
 
         if (grade || nominal) {
           rows.push({ grade, nominal, thickness, width, lf, boardLength, rawLength: lengthText, rawGrade: grade });
@@ -768,10 +746,9 @@ function extractLineItems(rawText, file) {
     
     // Match length
     let boardLength = 16; // default
-    const rlM = line.match(/RL[^0-9]*(\d+)/i);
-    const fixM = line.match(/\b(6|8|10|12|14|16|18|20)\b/);
-    if (rlM) boardLength = parseInt(rlM[1]);
-    else if (fixM) boardLength = parseInt(fixM[1]);
+    const allNumsLine = line.match(/\b(\d+)'?\b/g);
+    const validLengths = (allNumsLine || []).map(n => parseInt(n)).filter(n => n >= 6 && n <= 24);
+    boardLength = validLengths.length ? Math.max(...validLengths) : 16;
     
     // Match grade/species — longest match first
     const gradePatterns = [
@@ -797,136 +774,238 @@ function extractLineItems(rawText, file) {
   return items;
 }
 
-// ─── Ship-To Extraction ──────────────────────────────────────────
-async function extractShipTo(pdf) {
-  const page = await pdf.getPage(1);
-  const tc = await page.getTextContent();
-  const vp = page.getViewport({ scale: 1 });
-  const pageWidth = vp.width;
-
-  const rightItems = tc.items
-    .map(it => ({ text: it.str.trim(), x: it.transform[4], y: it.transform[5] }))
-    .filter(it => it.text.length > 2 && it.x > pageWidth * 0.5);
-
-  rightItems.sort((a, b) => b.y - a.y);
-
-  let shippingHeaderY = null;
-  for (const it of rightItems) {
-    if (it.text.toUpperCase().includes('SHIPPING INFORMATION')) {
-      shippingHeaderY = it.y;
-      break;
-    }
-  }
-
-  const candidates = shippingHeaderY !== null
-    ? rightItems.filter(it => it.y < shippingHeaderY)
-    : rightItems;
-
-  const statePattern = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/;
-  const streetPattern = /^\d+\s|\b(st|ave|blvd|dr|rd|ln|way|ct|pl|hwy|ranch|peak|lot|suite|floor)\b/i;
-  const skipPattern = /^(prices|subject|minimum|final|deposit|sales|lead|sample|confirm|approximate)/i;
-
-  // Filter noise
-  const clean = candidates.filter(it => {
-    const t = it.text;
-    if (t.includes('@') || /^[\d\s()\-+]+$/.test(t)) return false;
-    if (skipPattern.test(t)) return false;
-    return true;
-  });
-
-  // Find city/state/zip line
-  let stateIdx = -1;
-  for (let i = 0; i < clean.length; i++) {
-    if (statePattern.test(clean[i].text)) { stateIdx = i; break; }
-  }
-
-  let addressLine = '';
-  if (stateIdx !== -1) {
-    const cityLine = clean[stateIdx].text;
-    const stateY = clean[stateIdx].y;
-    // Look for a street line just above (within ~25px)
-    const streetAbove = clean.slice(0, stateIdx).reverse().find(it =>
-      Math.abs(it.y - stateY) < 25 && (streetPattern.test(it.text) || /^\d/.test(it.text))
-    );
-    addressLine = streetAbove
-      ? streetAbove.text.replace(/^jobsite[:\s]*/i, '').trim() + ', ' + cityLine
-      : cityLine;
-  }
-
-  // Fallback to street pattern only
-  if (!addressLine) {
-    const st = clean.find(it => streetPattern.test(it.text));
-    if (st) addressLine = st.text;
-  }
-
-  return addressLine.replace(/^jobsite[:\s]*/i, '').trim();
-}
-
 // ─── Main Process ────────────────────────────────────────────────
 async function processFile(file) {
   document.getElementById('fileName').textContent = file.name;
-  setStatus('Parsing PDF...', '');
+  setStatus('Sending PDF to AI parser...', '');
 
   try {
-    // Try structured column-based extraction first
-    let rows = await extractLineItemsStructured(file);
+    // Always extract ship-to address from PDF for email
+    try {
+      const ab2 = await file.arrayBuffer();
+      const pdf2 = await pdfjsLib.getDocument({ data: ab2 }).promise;
+      window._shipTo = await extractShipTo(pdf2);
+    } catch(e) { window._shipTo = ''; }
 
-    // Always do a full text pass to extract jobsite address
-    const arrayBuffer2 = await file.arrayBuffer();
-    const pdf2 = await pdfjsLib.getDocument({ data: arrayBuffer2 }).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf2.numPages; i++) {
-      const page = await pdf2.getPage(i);
-      const tc = await page.getTextContent();
-      fullText += tc.items.map(it => it.str).join(' ') + '\n';
-    }
-    // Extract ship-to address from top-right of page (shipping info section)
-    window._shipTo = await extractShipTo(pdf2);
+    // Convert PDF to base64 and send to Claude API for reliable extraction
+    const base64Data = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = () => rej(new Error('Read failed'));
+      r.readAsDataURL(file);
+    });
 
-    // Fall back to text/regex extraction if structured finds nothing
-    if (rows.length === 0) {
-      rows = extractLineItems(fullText, file);
-    }
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Data } },
+            { type: 'text', text: `Extract all lumber line items from this order sheet. For each item return ONLY a JSON array with no extra text, like:
+[{"grade":"Spruce","nominal":"1 x 6","thickness":"1","width":"6","lf":2004,"length":"RL 6-16"},{"grade":"WRC STK","nominal":"1 x 12","thickness":"1","width":"12","lf":704,"length":"16"}]
+Rules:
+- grade = the species/grade column exactly as written (e.g. "Spruce", "WRC STK", "Accoya")
+- lf = the LINEAL FOOT column number only
+- length = the LENGTH column value
+- thickness and width = from the NOMINAL SIZE column
+- Skip any row that is a subtotal, freight, grand total, or header
+- Return only the JSON array, nothing else` }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content.map(i => i.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    let rows = JSON.parse(clean);
+
+    // Normalize fields
+    rows = rows.map(r => ({
+      grade: r.grade || '',
+      rawGrade: r.grade || '',
+      nominal: r.nominal || '',
+      thickness: String(r.thickness || ''),
+      width: String(r.width || ''),
+      lf: parseFloat(String(r.lf).replace(/,/g,'')),
+      boardLength: (() => {
+        const s = String(r.length || '16');
+        const allNums3 = s.match(/\d+/g);
+        const validNums = (allNums3 || []).map(Number).filter(n => n >= 6 && n <= 24);
+        return validNums.length ? Math.max(...validNums) : 16;
+      })(),
+      rawLength: String(r.length || '16')
+    })).filter(r => r.lf > 0);
 
     if (rows.length === 0) {
       setStatus('Could not extract line items. Check PDF format.', 'err');
       return;
     }
 
-    // Enrich with species + weights
-    lineItems = rows.map((row, idx) => {
-      const speciesGroup = resolveSpecies(row.rawGrade || row.grade);
-      const sizeStr = (row.thickness && row.width) ? normalizeSize(row.thickness, row.width) : '';
-      const wPerLF = speciesGroup && sizeStr ? lookupWeight(speciesGroup, sizeStr) : null;
-      const roundedLF = Math.ceil(row.lf / 5) * 5;
-      const rawWeight = wPerLF ? wPerLF * roundedLF : null;
-      const totalWeight = rawWeight !== null ? Math.ceil(rawWeight / 5) * 5 : null;
-      const flagged = !speciesGroup || !wPerLF;
-
-      return {
-        id: idx + 1,
-        grade: row.rawGrade || 'Unknown',
-        speciesGroup,
-        nominal: row.nominal || `${row.thickness}x${row.width}`,
-        sizeStr,
-        lf: row.lf,
-        roundedLF,
-        boardLength: row.boardLength || 16,
-        rawLength: row.rawLength,
-        wPerLF,
-        totalWeight,
-        flagged
-      };
-    });
-
-    renderLineItems();
-    calculatePallets();
-    setStatus(`✓ Extracted ${lineItems.length} line item${lineItems.length !== 1 ? 's' : ''}`, 'ok');
+    finishProcessing(rows);
 
   } catch (err) {
     console.error(err);
-    setStatus('Error parsing PDF: ' + err.message, 'err');
+    // API failed (e.g. offline/CORS) — fall back to local PDF.js parser
+    setStatus('API unavailable, using local parser...', '');
+    try {
+      await localParseFallback(file);
+    } catch (err2) {
+      setStatus('Error parsing PDF: ' + err2.message, 'err');
+    }
   }
+}
+
+// ─── Local PDF.js Fallback Parser ────────────────────────────────
+async function localParseFallback(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  // Pull all text items sorted top-to-bottom, left-to-right
+  let allItems = [];
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const tc = await page.getTextContent();
+    for (const item of tc.items) {
+      if (item.str.trim().length > 0) {
+        allItems.push({ text: item.str.trim(), x: Math.round(item.transform[4]), y: Math.round(item.transform[5]) });
+      }
+    }
+  }
+  // Sort top-to-bottom
+  allItems.sort((a, b) => b.y - a.y || a.x - b.x);
+
+  // Flatten to one big string preserving order — species and LF will appear on same logical line
+  const flatText = allItems.map(i => i.text).join(' ');
+
+  const speciesKeywords = [
+    'WRC STK','WRC A&BTR','WRC A & BTR','Western Red Cedar','Douglas Fir','Mountain Hemlock',
+    '#2ESLP','2ESLP','ESLP','A&BTR','A & BTR',
+    'Spruce','Cedar','WRC','Ayous','STK',
+    'Cypress','Oak','Accoya','Fir','Hemlock',
+    'Kebony','Abodo','Alder','Walnut','Teak'
+  ];
+
+  // For each species keyword: look BEFORE for nominal size, AFTER for LF
+  let rows = [];
+  let usedKeys = new Set();
+
+  // Build a list of all species match positions for boundary detection
+  const allSpeciesPositions = [];
+  for (const kw of speciesKeywords) {
+    let sf = 0;
+    while (true) {
+      const i = flatText.toLowerCase().indexOf(kw.toLowerCase(), sf);
+      if (i === -1) break;
+      // Word boundary check: char before and after must not be a letter
+      const before0 = i === 0 ? ' ' : flatText[i - 1];
+      const after0 = i + kw.length >= flatText.length ? ' ' : flatText[i + kw.length];
+      if (!/[a-zA-Z]/.test(before0) && !/[a-zA-Z]/.test(after0)) {
+        allSpeciesPositions.push(i);
+      }
+      sf = i + 1;
+    }
+  }
+  allSpeciesPositions.sort((a, b) => a - b);
+
+  for (const kw of speciesKeywords) {
+    let searchFrom = 0;
+    while (true) {
+      const idx = flatText.toLowerCase().indexOf(kw.toLowerCase(), searchFrom);
+      if (idx === -1) break;
+      searchFrom = idx + 1;
+
+      // Word boundary check — skip if kw is part of a larger word (e.g. "Fir" in "Confirm")
+      const charBefore = idx === 0 ? ' ' : flatText[idx - 1];
+      const charAfter = idx + kw.length >= flatText.length ? ' ' : flatText[idx + kw.length];
+      if (/[a-zA-Z]/.test(charBefore) || /[a-zA-Z]/.test(charAfter)) continue;
+
+      // Look BEFORE for nominal size — take LAST simple NxN match (closest to species)
+      const before = flatText.substring(Math.max(0, idx - 400), idx);
+      const sizeMatches = [...before.matchAll(/\b(\d{1,2})\s*[xX]\s*(\d{1,2})\b/g)];
+      if (!sizeMatches.length) continue;
+      const lastSize = sizeMatches[sizeMatches.length - 1];
+      const thickness = lastSize[1];
+      const width = lastSize[2];
+      const w = parseInt(width); const t = parseInt(thickness);
+      if (w > 20 || w < 2 || t < 1 || t > 10) continue;
+
+      // Find where the NEXT species keyword starts — stop LF search there
+      const nextSpeciesPos = allSpeciesPositions.find(p => p > idx + kw.length) || idx + kw.length + 200;
+      const afterEnd = Math.min(nextSpeciesPos, idx + kw.length + 400);
+      const after = flatText.substring(idx + kw.length, afterEnd);
+      const cleanAfter = after.replace(/\$[\d,]+\.?\d*/g, '').replace(/,/g, '');
+      const numMatches = [...cleanAfter.matchAll(/\b(\d+(?:\.\d+)?)\b/g)]
+        .map(m => parseFloat(m[1])).filter(n => n >= 50 && n < 100000);
+      if (!numMatches.length) continue;
+      const lf = Math.max(...numMatches);
+
+      // Board length — look ONLY in the 150 chars immediately before the species
+      // (LENGTH column appears just before GRADE column in the table)
+      const lenWindow = flatText.substring(Math.max(0, idx - 150), idx);
+      const cleanLenWindow = lenWindow.replace(/\$[\d,]+\.?\d*/g, '');
+      // Check for RL range first (e.g. "RL 6'-16'" → take max)
+      const rlMatch2 = cleanLenWindow.match(/RL[^\d]*(\d+)[^\d]+(\d+)/i);
+      let boardLength;
+      if (rlMatch2) {
+        boardLength = Math.max(parseInt(rlMatch2[1]), parseInt(rlMatch2[2]));
+      } else {
+        // Take the LAST standalone integer in range 6-24 (closest to species)
+        const lenNums = [...cleanLenWindow.matchAll(/\b(\d+)\b/g)]
+          .map(m => parseInt(m[1])).filter(n => n >= 6 && n <= 24);
+        boardLength = lenNums.length ? lenNums[lenNums.length - 1] : 16;
+      }
+
+      // Keep lf as float so ceil(/5)*5 rounding works correctly (e.g. 1225.125 -> 1230)
+      const key = `${Math.round(lf)}-${thickness}x${width}`;
+      if (usedKeys.has(key)) continue;
+      usedKeys.add(key);
+
+      rows.push({ grade: kw, rawGrade: kw, nominal: `${thickness} x ${width}`,
+        thickness, width, lf: lf, boardLength, rawLength: String(boardLength) });
+    }
+  }
+
+  if (rows.length === 0) {
+    setStatus('Could not extract line items. Try the version inside Claude.ai.', 'err');
+    return;
+  }
+
+  finishProcessing(rows);
+}
+
+function finishProcessing(rows) {
+  lineItems = rows.map((row, idx) => {
+    const speciesGroup = resolveSpecies(row.rawGrade || row.grade);
+    const sizeStr = (row.thickness && row.width) ? normalizeSize(row.thickness, row.width) : '';
+    const wPerLF = speciesGroup && sizeStr ? lookupWeight(speciesGroup, sizeStr) : null;
+    const roundedLF = Math.ceil(row.lf / 5) * 5;
+    const rawWeight = wPerLF ? wPerLF * roundedLF : null;
+    const totalWeight = rawWeight !== null ? Math.ceil(rawWeight / 5) * 5 : null;
+    const flagged = !speciesGroup || !wPerLF;
+    return {
+      id: idx + 1,
+      grade: row.rawGrade || 'Unknown',
+      speciesGroup,
+      nominal: row.nominal || `${row.thickness}x${row.width}`,
+      sizeStr,
+      lf: row.lf,
+      roundedLF,
+      boardLength: row.boardLength || 16,
+      rawLength: row.rawLength,
+      wPerLF,
+      totalWeight,
+      flagged
+    };
+  });
+
+  renderLineItems();
+  calculatePallets();
+  setStatus(`✓ Extracted ${lineItems.length} line item${lineItems.length !== 1 ? 's' : ''}`, 'ok');
 }
 
 function renderLineItems() {
@@ -991,7 +1070,7 @@ function calculatePallets() {
   const fillRatio = weightPerPallet / PALLET_MAX_LBS;
   const rawHeight = fillRatio * 48;
   const roundedHeight = Math.ceil(rawHeight / 2) * 2;
-  const palletHeight = roundedHeight + 2;
+  const palletHeight = Math.min(roundedHeight + 2, 48); // cap at 48"
 
   // Width = same as height
   const palletWidth = palletHeight;
@@ -1018,36 +1097,12 @@ function calculatePallets() {
   document.getElementById('totalPallets').textContent = totalPallets;
   document.getElementById('totalWeight').textContent = Math.round(grandTotalWeight).toLocaleString();
 
-  // Store pallets globally for dropdown
-  window._pallets = pallets;
-
-  // Build dropdown options
-  const selectHTML = pallets.length > 1 ? `
-    <select id="palletSelect" onchange="showPallet(this.value)" style="
-      width:100%;
-      background:var(--bg);
-      border:1px solid var(--border);
-      color:var(--text);
-      font-family:'IBM Plex Mono',monospace;
-      font-size:0.75rem;
-      padding:7px 10px;
-      border-radius:2px;
-      margin-bottom:12px;
-      cursor:pointer;
-    ">
-      ${pallets.map(p => {
-        const fillPct = Math.round((p.weight / PALLET_MAX_LBS) * 100);
-        return `<option value="${p.num - 1}">P${p.num} — ${fillPct}% full · ${Math.round(p.weight).toLocaleString()} lbs</option>`;
-      }).join('')}
-    </select>` : '';
-
-  // Build all pallet cards (hidden by default except first)
-  let cardsHTML = selectHTML;
+  let cardsHTML = '';
   for (const p of pallets) {
     const fillPct = Math.round((p.weight / PALLET_MAX_LBS) * 100);
     const borderColor = p.isFull ? 'var(--accent)' : 'var(--warn)';
     cardsHTML += `
-      <div class="pallet-card" id="palletCard${p.num}" style="border-left-color:${borderColor};display:${p.num === 1 ? 'block' : 'none'}">
+      <div class="pallet-card" style="border-left-color:${borderColor}">
         <div style="display:flex;align-items:baseline;gap:10px;">
           <div class="pallet-num">P${p.num}</div>
           <div class="pallet-label">${fillPct}% full · ${Math.round(p.weight).toLocaleString()} lbs</div>
@@ -1065,6 +1120,11 @@ function calculatePallets() {
   }
 
   document.getElementById('palletCards').innerHTML = cardsHTML;
+
+  // Store pallets globally for dropdown
+  window._pallets = pallets;
+
+  // Build work breakdown
   buildWorkBreakdown(lineItems, pallets, totalLumberWeight, palletCount, weightPerPallet);
   updateEmailLink();
 }
@@ -1125,111 +1185,6 @@ function saveWeights() {
   setStatus('Weights saved.', 'ok');
 }
 
-// ─── Pallet Dropdown ─────────────────────────────────────────────
-function showPallet(idx) {
-  const pallets = window._pallets || [];
-  pallets.forEach(p => {
-    const el = document.getElementById('palletCard' + p.num);
-    if (el) el.style.display = parseInt(idx) === p.num - 1 ? 'block' : 'none';
-  });
-}
-
-// ─── Work Breakdown ──────────────────────────────────────────────
-function toggleWorkShown() {
-  const el = document.getElementById('workBreakdown');
-  const btn = document.getElementById('showWorkBtn');
-  const visible = el.style.display !== 'none';
-  el.style.display = visible ? 'none' : 'block';
-  btn.textContent = visible ? '▾ Show Work' : '▴ Hide Work';
-}
-
-function buildWorkBreakdown(lineItems, pallets, totalLumberWeight, palletCount, weightPerPallet) {
-  const PALLET_MAX = 3500;
-  const btn = document.getElementById('showWorkBtn');
-  btn.style.opacity = '1';
-  btn.style.pointerEvents = 'auto';
-
-  const knownItems = lineItems.filter(i => i.totalWeight !== null);
-  if (knownItems.length === 0) return;
-
-  let html = '';
-
-  // Step 1: Per-item weight calc
-  html += `<div class="work-step">
-    <div class="work-step-title">Step 1 — Weight Per Line Item</div>`;
-  for (const item of knownItems) {
-    html += `<div class="work-line">
-      Item ${item.id} · ${item.speciesGroup} ${item.sizeStr}
-      &nbsp;→&nbsp; ${item.lf.toLocaleString()} LF
-      → rounded up to nearest 5 = <span class="work-result">${item.roundedLF.toLocaleString()} LF</span>
-      &nbsp;×&nbsp; ${item.wPerLF} lbs/LF
-      = <span class="work-result">${(item.wPerLF * item.roundedLF).toLocaleString(undefined,{maximumFractionDigits:1})} lbs</span>
-      → rounded up to nearest 5 = <span class="work-result">${item.totalWeight.toLocaleString()} lbs</span>
-    </div>`;
-  }
-  html += `</div>`;
-
-  // Step 2: Total lumber weight
-  html += `<div class="work-step">
-    <div class="work-step-title">Step 2 — Total Lumber Weight</div>
-    <div class="work-line">${knownItems.map(i => i.totalWeight.toLocaleString()).join(' + ')}
-    = <span class="work-result">${totalLumberWeight.toLocaleString()} lbs</span></div>
-  </div>`;
-
-  // Step 3: Pallet count
-  html += `<div class="work-step">
-    <div class="work-step-title">Step 3 — Number of Pallets</div>
-    <div class="work-line">${totalLumberWeight.toLocaleString()} ÷ ${PALLET_MAX.toLocaleString()} = ${(totalLumberWeight/PALLET_MAX).toFixed(3)}
-    → round up = <span class="work-result">${palletCount} pallet${palletCount !== 1 ? 's' : ''}</span></div>
-  </div>`;
-
-  // Step 4: Weight per pallet
-  html += `<div class="work-step">
-    <div class="work-step-title">Step 4 — Weight Per Pallet</div>
-    <div class="work-line">${totalLumberWeight.toLocaleString()} ÷ ${palletCount} = <span class="work-result">${Math.round(weightPerPallet).toLocaleString()} lbs</span>
-    &nbsp;(${Math.round((weightPerPallet/PALLET_MAX)*100)}% of max capacity)</div>
-  </div>`;
-
-  // Step 5: Pallet dimensions
-  const p = pallets[0];
-  const fillRatio = (weightPerPallet / PALLET_MAX);
-  const rawH = fillRatio * 48;
-  const roundedH = Math.ceil(rawH / 2) * 2;
-  const finalH = roundedH + 2;
-  html += `<div class="work-step">
-    <div class="work-step-title">Step 5 — Pallet Height & Width</div>
-    <div class="work-line">${Math.round(weightPerPallet).toLocaleString()} ÷ ${PALLET_MAX} = ${fillRatio.toFixed(4)} fill ratio</div>
-    <div class="work-line">${fillRatio.toFixed(4)} × 48" = ${rawH.toFixed(2)}"
-    → round up to nearest 2" = ${roundedH}"
-    → +2" buffer = <span class="work-result">${finalH}"</span></div>
-  </div>`;
-
-  // Step 6: Pallet length
-  const maxLen = Math.max(...knownItems.map(i => i.boardLength || 16));
-  html += `<div class="work-step">
-    <div class="work-step-title">Step 6 — Pallet Length</div>
-    <div class="work-line">Longest board: ${maxLen}' × 12 = ${maxLen*12}"
-    → +4" overhang = <span class="work-result">${maxLen*12+4}"</span></div>
-  </div>`;
-
-  // Step 7: Total shipping weight
-  const totalShipping = totalLumberWeight + (palletCount * 150);
-  html += `<div class="work-step">
-    <div class="work-step-title">Step 7 — Total Shipping Weight</div>
-    <div class="work-line">${totalLumberWeight.toLocaleString()} lbs lumber
-    + (${palletCount} × 150 lbs/pallet)
-    = <span class="work-result">${Math.round(totalShipping).toLocaleString()} lbs</span></div>
-  </div>`;
-
-  // Summary
-  html += `<hr class="work-divider">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--accent);padding:4px 0;">
-    RESULT: ${palletCount} unit${palletCount!==1?'s':''} · ${p.length}" × ${p.width}" × ${p.height}" · ${Math.round(totalShipping).toLocaleString()} lbs total
-  </div>`;
-
-  document.getElementById('workContent').innerHTML = html;
-}
-
 // ─── Utilities ───────────────────────────────────────────────────
 function setStatus(msg, type) {
   const bar = document.getElementById('statusBar');
@@ -1257,45 +1212,137 @@ function clearAll() {
   setStatus('Cleared — ready for next estimate.', '');
 }
 
+// ─── Ship-To Extraction ──────────────────────────────────────────
+async function extractShipTo(pdf) {
+  const page = await pdf.getPage(1);
+  const tc = await page.getTextContent();
+  const vp = page.getViewport({ scale: 1 });
+  const pageWidth = vp.width;
+  const rightItems = tc.items
+    .map(it => ({ text: it.str.trim(), x: it.transform[4], y: it.transform[5] }))
+    .filter(it => it.text.length > 2 && it.x > pageWidth * 0.5);
+  rightItems.sort((a, b) => b.y - a.y);
+  let shippingHeaderY = null;
+  for (const it of rightItems) {
+    if (it.text.toUpperCase().includes('SHIPPING INFORMATION')) { shippingHeaderY = it.y; break; }
+  }
+  const candidates = shippingHeaderY !== null ? rightItems.filter(it => it.y < shippingHeaderY) : rightItems;
+  const statePattern = /(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)/;
+  const streetPattern = /^\d+\s|(st|ave|blvd|dr|rd|ln|way|ct|pl|hwy|ranch|peak|lot|suite|floor)/i;
+  const skipPattern = /^(prices|subject|minimum|final|deposit|sales|lead|sample|confirm|approximate)/i;
+  const clean = candidates.filter(it => {
+    const t = it.text;
+    if (t.includes('@') || /^[\d\s()\-+]+$/.test(t)) return false;
+    if (skipPattern.test(t)) return false;
+    return true;
+  });
+  let stateIdx = -1;
+  for (let i = 0; i < clean.length; i++) {
+    if (statePattern.test(clean[i].text)) { stateIdx = i; break; }
+  }
+  let addressLine = '';
+  if (stateIdx !== -1) {
+    const cityLine = clean[stateIdx].text;
+    const stateY = clean[stateIdx].y;
+    const streetAbove = clean.slice(0, stateIdx).reverse().find(it =>
+      Math.abs(it.y - stateY) < 25 && (streetPattern.test(it.text) || /^\d/.test(it.text))
+    );
+    addressLine = streetAbove ? streetAbove.text.replace(/^jobsite[:\s]*/i, '').trim() + ', ' + cityLine : cityLine;
+  }
+  if (!addressLine) {
+    const st = clean.find(it => streetPattern.test(it.text));
+    if (st) addressLine = st.text;
+  }
+  return addressLine.replace(/^jobsite[:\s]*/i, '').trim();
+}
+
+// ─── Pallet Dropdown ─────────────────────────────────────────────
+function showPallet(idx) {
+  const pallets = window._pallets || [];
+  pallets.forEach(p => {
+    const el = document.getElementById('palletCard' + p.num);
+    if (el) el.style.display = parseInt(idx) === p.num - 1 ? 'block' : 'none';
+  });
+}
+
+// ─── Work Breakdown ──────────────────────────────────────────────
+function toggleWorkShown() {
+  const el = document.getElementById('workBreakdown');
+  const btn = document.getElementById('showWorkBtn');
+  const visible = el.style.display !== 'none';
+  el.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '▾ Show Work' : '▴ Hide Work';
+}
+
+function buildWorkBreakdown(lineItems, pallets, totalLumberWeight, palletCount, weightPerPallet) {
+  const PALLET_MAX = 3500;
+  const btn = document.getElementById('showWorkBtn');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+  const knownItems = lineItems.filter(i => i.totalWeight !== null);
+  if (knownItems.length === 0) return;
+  let html = '';
+  html += `<div class="work-step"><div class="work-step-title">Step 1 — Weight Per Line Item</div>`;
+  for (const item of knownItems) {
+    html += `<div class="work-line">Item ${item.id} · ${item.speciesGroup} ${item.sizeStr}
+      &nbsp;→&nbsp; ${item.lf.toLocaleString()} LF → rounded = <span class="work-result">${item.roundedLF.toLocaleString()} LF</span>
+      &nbsp;×&nbsp; ${item.wPerLF} lbs/LF = <span class="work-result">${(item.wPerLF * item.roundedLF).toLocaleString(undefined,{maximumFractionDigits:1})} lbs</span>
+      → rounded = <span class="work-result">${item.totalWeight.toLocaleString()} lbs</span></div>`;
+  }
+  html += `</div>`;
+  html += `<div class="work-step"><div class="work-step-title">Step 2 — Total Lumber Weight</div>
+    <div class="work-line">${knownItems.map(i => i.totalWeight.toLocaleString()).join(' + ')} = <span class="work-result">${totalLumberWeight.toLocaleString()} lbs</span></div></div>`;
+  html += `<div class="work-step"><div class="work-step-title">Step 3 — Number of Pallets</div>
+    <div class="work-line">${totalLumberWeight.toLocaleString()} ÷ ${PALLET_MAX.toLocaleString()} = ${(totalLumberWeight/PALLET_MAX).toFixed(3)} → round up = <span class="work-result">${palletCount} pallet${palletCount !== 1 ? 's' : ''}</span></div></div>`;
+  html += `<div class="work-step"><div class="work-step-title">Step 4 — Weight Per Pallet</div>
+    <div class="work-line">${totalLumberWeight.toLocaleString()} ÷ ${palletCount} = <span class="work-result">${Math.round(weightPerPallet).toLocaleString()} lbs</span> (${Math.round((weightPerPallet/PALLET_MAX)*100)}% capacity)</div></div>`;
+  const p = pallets[0];
+  const fillRatio = weightPerPallet / PALLET_MAX;
+  const rawH = fillRatio * 48;
+  const roundedH = Math.ceil(rawH / 2) * 2;
+  const finalH = roundedH + 2;
+  html += `<div class="work-step"><div class="work-step-title">Step 5 — Pallet Height & Width</div>
+    <div class="work-line">${Math.round(weightPerPallet).toLocaleString()} ÷ ${PALLET_MAX} = ${fillRatio.toFixed(4)} × 48" = ${rawH.toFixed(2)}" → nearest 2" = ${roundedH}" + 2" buffer = <span class="work-result">${finalH}"</span></div></div>`;
+  const maxLen = Math.max(...knownItems.map(i => i.boardLength || 16));
+  html += `<div class="work-step"><div class="work-step-title">Step 6 — Pallet Length</div>
+    <div class="work-line">Longest board: ${maxLen}' × 12 = ${maxLen*12}" + 4" = <span class="work-result">${maxLen*12+4}"</span></div></div>`;
+  const totalShipping = totalLumberWeight + (palletCount * 150);
+  html += `<div class="work-step"><div class="work-step-title">Step 7 — Total Shipping Weight</div>
+    <div class="work-line">${totalLumberWeight.toLocaleString()} lbs + (${palletCount} × 150) = <span class="work-result">${Math.round(totalShipping).toLocaleString()} lbs</span></div></div>`;
+  html += `<hr class="work-divider">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--accent);padding:4px 0;">
+    RESULT: ${palletCount} unit${palletCount!==1?'s':''} · ${p.length}" × ${p.width}" × ${p.height}" · ${Math.round(totalShipping).toLocaleString()} lbs total
+  </div>`;
+  document.getElementById('workContent').innerHTML = html;
+}
+
 // ─── Recipients ──────────────────────────────────────────────────
 const DEFAULT_RECIPIENTS = [
-  { name: 'Tyler Raz',          email: 'tylerr@openroad.inc',    role: 'to',  selected: true  },
-  { name: 'Erik Whitney',       email: 'erik@hewn.com',           role: 'cc',  selected: true  },
-  { name: 'Carie Bruce',        email: 'carie@hewn.com',          role: 'cc',  selected: true  },
+  { name: 'Tyler Raz',          email: 'tylerr@openroad.inc',       role: 'to', selected: true },
+  { name: 'Erik Whitney',       email: 'erik@hewn.com',             role: 'cc', selected: true },
+  { name: 'Carie Bruce',        email: 'carie@hewn.com',            role: 'cc', selected: true },
   { name: 'Christopher Harper', email: 'christopherh@openroad.inc', role: 'cc', selected: true },
-  { name: 'Steve Greer',        email: 'steveg@openroad.inc',     role: 'cc',  selected: true  },
+  { name: 'Steve Greer',        email: 'steveg@openroad.inc',       role: 'cc', selected: true },
 ];
 let recipients = JSON.parse(localStorage.getItem('palletRecipients') || 'null') || JSON.parse(JSON.stringify(DEFAULT_RECIPIENTS));
-// Migrate old data that doesn't have role field — reset to defaults
 if (recipients.length > 0 && !recipients[0].role) {
   recipients = JSON.parse(JSON.stringify(DEFAULT_RECIPIENTS));
   saveRecipients();
 }
 
-function saveRecipients() {
-  localStorage.setItem('palletRecipients', JSON.stringify(recipients));
-}
+function saveRecipients() { localStorage.setItem('palletRecipients', JSON.stringify(recipients)); }
 
 function renderRecipients() {
   const list = document.getElementById('recipientList');
   const msg  = document.getElementById('noRecipientsMsg');
-  const btn  = document.getElementById('sendEmailBtn');
-
-  if (recipients.length === 0) {
-    list.innerHTML = '';
-    msg.style.display = 'block';
-    updateEmailLink();
-    return;
-  }
+  if (recipients.length === 0) { list.innerHTML = ''; msg.style.display = 'block'; updateEmailLink(); return; }
   msg.style.display = 'none';
   list.innerHTML = recipients.map((r, i) => {
     const isPrimary = r.role === 'to';
     const badge = isPrimary
       ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:1px 6px;border-radius:2px;background:rgba(200,169,74,0.15);color:var(--accent);border:1px solid rgba(200,169,74,0.3);">TO</span>`
       : `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;padding:1px 6px;border-radius:2px;background:rgba(136,136,128,0.15);color:var(--muted);border:1px solid rgba(136,136,128,0.3);">CC</span>`;
-    const disabled = isPrimary ? 'style="pointer-events:none;opacity:0.5;"' : '';
-    return `
-    <div class="recipient-row ${r.selected ? 'selected' : ''}" onclick="${isPrimary ? '' : `toggleRecipient(${i})`}">
+    return `<div class="recipient-row ${r.selected ? 'selected' : ''}" onclick="${isPrimary ? '' : `toggleRecipient(${i})`}">
       <input type="checkbox" ${r.selected ? 'checked' : ''} ${isPrimary ? 'disabled' : ''} onclick="event.stopPropagation();toggleRecipient(${i})" />
       ${badge}
       <span class="recipient-name">${r.name}</span>
@@ -1314,35 +1361,21 @@ function renderRecipientEditor() {
       <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;flex:1;color:var(--text);">${r.name}</span>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);">${r.email}</span>
       ${r.role !== 'to' ? `<button onclick="removeRecipient(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.9rem;padding:2px 6px;">✕</button>` : '<span style="width:24px;"></span>'}
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function toggleRecipient(i) {
-  recipients[i].selected = !recipients[i].selected;
-  saveRecipients();
-  renderRecipients();
-}
-
+function toggleRecipient(i) { recipients[i].selected = !recipients[i].selected; saveRecipients(); renderRecipients(); }
 function addRecipient() {
-  const name  = document.getElementById('newRecipientName').value.trim();
+  const name = document.getElementById('newRecipientName').value.trim();
   const email = document.getElementById('newRecipientEmail').value.trim();
   if (!name || !email) return;
   recipients.push({ name, email, role: 'cc', selected: false });
   saveRecipients();
   document.getElementById('newRecipientName').value = '';
   document.getElementById('newRecipientEmail').value = '';
-  renderRecipients();
-  renderRecipientEditor();
+  renderRecipients(); renderRecipientEditor();
 }
-
-function removeRecipient(i) {
-  recipients.splice(i, 1);
-  saveRecipients();
-  renderRecipients();
-  renderRecipientEditor();
-}
-
+function removeRecipient(i) { recipients.splice(i, 1); saveRecipients(); renderRecipients(); renderRecipientEditor(); }
 function toggleRecipientEditor() {
   const panel = document.getElementById('recipientEditorPanel');
   const isHidden = panel.style.display === 'none';
@@ -1351,32 +1384,21 @@ function toggleRecipientEditor() {
 }
 
 function buildGmailUrl() {
-  const toRecipients = recipients.filter(r => r.selected && r.role === 'to');
-  const ccRecipients = recipients.filter(r => r.selected && r.role === 'cc');
-  if (toRecipients.length === 0) return;
-
-  const to = toRecipients.map(r => r.email).join(',');
-  const cc = ccRecipients.map(r => r.email).join(',');
-
-  const primaryName = toRecipients[0].name.split(' ')[0];
-
+  const toR = recipients.filter(r => r.selected && r.role === 'to');
+  const ccR = recipients.filter(r => r.selected && r.role === 'cc');
+  if (toR.length === 0) return;
+  const to = toR.map(r => r.email).join(',');
+  const cc = ccR.map(r => r.email).join(',');
+  const primaryName = toR[0].name.split(' ')[0];
   const fileName = document.getElementById('fileName').textContent;
   const projectName = fileName ? fileName.replace(/\.pdf$/i, '').replace(/_/g, ' ') : 'Lumber Order';
   const subject = encodeURIComponent(`Budgetary Shipping Quote — ${projectName}`);
-
   const totalPallets = document.getElementById('totalPallets').textContent;
   const totalWeight  = document.getElementById('totalWeight').textContent;
-
-  // Get dims from first visible pallet card
   let dims = '';
   const allCards = document.querySelectorAll('.pallet-card');
-  if (allCards.length > 0) {
-    const dimsEl = allCards[0].querySelector('.pallet-dims');
-    if (dimsEl) dims = dimsEl.textContent.trim();
-  }
-
-  const body = encodeURIComponent(
-`Hello ${primaryName},
+  if (allCards.length > 0) { const d = allCards[0].querySelector('.pallet-dims'); if (d) dims = d.textContent.trim(); }
+  const body = encodeURIComponent(`Hello ${primaryName},
 
 Can I please get a budgetary quote for this order shipping in about 12-14 weeks.
 
@@ -1389,37 +1411,28 @@ Tarped, side curtain or conestoga
 Going to: ${window._shipTo || '[DESTINATION ADDRESS]'}
 
 Thanks,
-Braylon`
-  );
-
+Braylon`);
   const ccParam = cc ? `&cc=${encodeURIComponent(cc)}` : '';
-  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}${ccParam}&su=${subject}&body=${body}`;
-  return url;
+  return `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}${ccParam}&su=${subject}&body=${body}`;
 }
 
 function updateEmailLink() {
   const el = document.getElementById('sendEmailBtn');
   if (!el) return;
-  const toRecipients = recipients.filter(r => r.selected && r.role === 'to');
-  const hasSelected = recipients.some(r => r.selected);
-  el.style.opacity = (toRecipients.length > 0 && hasSelected) ? '1' : '0.4';
-  el.style.pointerEvents = (toRecipients.length > 0 && hasSelected) ? 'auto' : 'none';
+  const toR = recipients.filter(r => r.selected && r.role === 'to');
+  el.style.opacity = toR.length > 0 ? '1' : '0.4';
+  el.style.pointerEvents = toR.length > 0 ? 'auto' : 'none';
 }
 
 function showEmailModal() {
   const url = buildGmailUrl();
   if (!url) return;
-
-  const toRecipients = recipients.filter(r => r.selected && r.role === 'to');
-  const ccRecipients = recipients.filter(r => r.selected && r.role === 'cc');
-
+  const toR = recipients.filter(r => r.selected && r.role === 'to');
+  const ccR = recipients.filter(r => r.selected && r.role === 'cc');
   document.getElementById('modalRecipients').innerHTML =
-    `<span style="color:var(--accent)">TO:</span> ${toRecipients.map(r => r.name + ' &lt;' + r.email + '&gt;').join(', ')}<br>` +
-    (ccRecipients.length ? `<span style="color:var(--muted)">CC:</span> ${ccRecipients.map(r => r.name + ' &lt;' + r.email + '&gt;').join(', ')}` : '');
-
-  // Build plain body text for textarea
-  const toR = toRecipients[0];
-  const primaryName = toR ? toR.name.split(' ')[0] : 'Tyler';
+    `<span style="color:var(--accent)">TO:</span> ${toR.map(r => r.name + ' &lt;' + r.email + '&gt;').join(', ')}<br>` +
+    (ccR.length ? `<span style="color:var(--muted)">CC:</span> ${ccR.map(r => r.name + ' &lt;' + r.email + '&gt;').join(', ')}` : '');
+  const primaryName = toR[0] ? toR[0].name.split(' ')[0] : 'Tyler';
   const fileName = document.getElementById('fileName').textContent;
   const projectName = fileName ? fileName.replace(/\.pdf$/i, '').replace(/_/g, ' ') : 'Lumber Order';
   const totalPallets = document.getElementById('totalPallets').textContent;
@@ -1427,7 +1440,6 @@ function showEmailModal() {
   let dims = '';
   const allCards = document.querySelectorAll('.pallet-card');
   if (allCards.length > 0) { const d = allCards[0].querySelector('.pallet-dims'); if (d) dims = d.textContent.trim(); }
-
   document.getElementById('modalBody').value =
 `Hello ${primaryName},
 
@@ -1443,15 +1455,11 @@ Going to: ${window._shipTo || '[DESTINATION ADDRESS]'}
 
 Thanks,
 Braylon`;
-
   document.getElementById('modalGmailLink').href = url;
   document.getElementById('emailModal').style.display = 'flex';
 }
 
-function closeEmailModal() {
-  document.getElementById('emailModal').style.display = 'none';
-}
-
+function closeEmailModal() { document.getElementById('emailModal').style.display = 'none'; }
 function copyEmailBody() {
   const ta = document.getElementById('modalBody');
   ta.select();
@@ -1464,34 +1472,19 @@ function copyEmailBody() {
 renderRecipients();
 
 // ─── Events ──────────────────────────────────────────────────────
-const fileInput = document.getElementById('fileInput');
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  if (e.target.files[0]) processFile(e.target.files[0]);
+});
+
 const zone = document.getElementById('uploadZone');
-
-// Click zone -> open file picker
-zone.addEventListener('click', (e) => {
-  if (e.target !== fileInput) fileInput.click();
-});
-
-// File selected via picker
-fileInput.addEventListener('change', (e) => {
-  const f = e.target.files[0];
-  if (f) processFile(f);
-});
-
-// Drag and drop
-zone.addEventListener('dragenter', (e) => { e.preventDefault(); zone.classList.add('drag'); });
-zone.addEventListener('dragover',  (e) => { e.preventDefault(); zone.classList.add('drag'); });
-zone.addEventListener('dragleave', (e) => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag'); });
+zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
 zone.addEventListener('drop', (e) => {
   e.preventDefault();
-  e.stopPropagation();
   zone.classList.remove('drag');
   const f = e.dataTransfer.files[0];
-  if (f && (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'))) {
-    processFile(f);
-  } else {
-    setStatus('Please drop a PDF file.', 'err');
-  }
+  if (f && f.type === 'application/pdf') processFile(f);
+  else setStatus('Please drop a PDF file.', 'err');
 });
 </script>
 
@@ -1507,9 +1500,7 @@ zone.addEventListener('drop', (e) => {
       <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);margin-bottom:6px;letter-spacing:1px;">BODY</div>
       <textarea id="modalBody" readonly style="width:100%;height:220px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.72rem;padding:10px;border-radius:2px;resize:none;line-height:1.6;"></textarea>
       <div style="display:flex;gap:8px;margin-top:12px;">
-        <a id="modalGmailLink" href="#" target="_blank" class="btn btn-primary" style="flex:1;text-align:center;text-decoration:none;display:block;padding:9px 18px;">
-          Open in Gmail ↗
-        </a>
+        <a id="modalGmailLink" href="#" target="_blank" class="btn btn-primary" style="flex:1;text-align:center;text-decoration:none;display:block;padding:9px 18px;">Open in Gmail ↗</a>
         <button onclick="copyEmailBody()" class="btn btn-ghost" style="flex:1;">Copy Body</button>
       </div>
     </div>
